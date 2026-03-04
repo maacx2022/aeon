@@ -8,7 +8,7 @@ permissions:
   - contents:write
 vars:
   - topic=neuroscience
-  - redis_key=neuro_bot:subscribers
+  - subscribers_file=memory/subscribers.json
   - search_terms=brain research, cognitive science, neuroimaging, mental health, BCIs, memory and learning
 ---
 
@@ -51,13 +51,14 @@ Today is ${today}. Generate and send a daily **${topic}** digest to all subscrib
    - Escape HTML entities: `&amp;` `&lt;` `&gt;`
    - Keep total message under 4000 chars (Telegram limit)
 
-4. **Fetch subscribers from Upstash Redis** using `run_code`:
+4. **Load subscribers** from `${subscribers_file}` using `run_code`:
    ```js
-   const r = await fetch(process.env.UPSTASH_REDIS_REST_URL + "/smembers/${redis_key}", {
-     headers: { Authorization: "Bearer " + process.env.UPSTASH_REDIS_REST_TOKEN }
-   })
-   return JSON.stringify(await r.json())
+   const fs = require("fs")
+   try {
+     return fs.readFileSync("${subscribers_file}", "utf-8")
+   } catch { return "[]" }
    ```
+   The file is a JSON array of chat IDs, e.g. `[123456, 789012]`.
 
 5. **Broadcast to all subscribers** using `run_code`. Send each message with a
    50ms delay to respect Telegram rate limits:
@@ -80,6 +81,4 @@ Today is ${today}. Generate and send a daily **${topic}** digest to all subscrib
 ## Environment Variables Required
 
 - `XAI_API_KEY` — X.AI API key for Grok x_search (optional, falls back to web_search)
-- `UPSTASH_REDIS_REST_URL` — Upstash Redis REST URL
-- `UPSTASH_REDIS_REST_TOKEN` — Upstash Redis REST token
 - `TELEGRAM_BOT_TOKEN` — Telegram bot token
