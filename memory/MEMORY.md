@@ -22,6 +22,7 @@
 | 2026-03-04 (v2) | digests/neuroscience-2026-03-04-v2.md | Telegram sent |
 | 2026-03-04 (v3) | digests/neuroscience-2026-03-04-v3.md | Telegram sent |
 | 2026-03-06 | digests/neuroscience-2026-03-06.md | Telegram sent |
+| 2026-03-07 | digests/neuroscience-2026-03-07.md | Telegram sent |
 
 ## Topics Covered (avoid repeating)
 - Alzheimer's: tau defense CRL5SOCS4 (UCLA/UCSF), molecular atlas (Rice)
@@ -35,6 +36,11 @@
 - MS treatment: BTK inhibitors Phase 3 (Roche/Novartis)
 - Consciousness: CATS Net (Nature Computational Science), Cogitate Consortium (Nature), IIT vs GNWT
 - DeFi/Crypto: TradFi-DeFi convergence, BlackRock ETH ETF staking, $300B stablecoins, RWAs at $16.7B, record $6.18T derivative volume (2026-03-07)
+- Brain Prize 2026: Ginty & Ernfors — touch/pain somatosensation (2026-03-07)
+- BCI: translation era, Neuralink/Synchron scaling trials, speech neuroprosthetics (2026-03-07)
+- Neuroimaging: Stanford AI brain "movies" from scans (2026-03-07)
+- Parkinson's: stem cell dopamine restoration trial, EEG prospective memory deficits (2026-03-07)
+- Exercise & BBB: liver enzyme repairs aging blood-brain barrier (2026-03-07)
 
 ## Features Built
 - **search_papers** (2026-03-06): Semantic Scholar API wrapper — search papers by query, date, citations, open access. No API key needed. Skill: skills/search-papers.md
