@@ -14,8 +14,9 @@
 | 2026-03-04 | When Machines Learn to Feel | AI + consciousness convergence |
 | 2026-03-06 | The Mind Gap | Consciousness (CATS Net, Cogitate, IIT vs GNWT) |
 | 2026-03-07 | Wall Street's DeFi Moment | TradFi/DeFi convergence |
+| 2026-03-08 | CRISPR's Coming of Age | Biotech: personalized CRISPR (Baby KJ), antibiotic resistance (UC San Diego pPro-MobV), epigenetic editing (UNSW) |
 
-**Gap:** No articles yet on neuroscience, climate/energy, biotech, or geopolitics. Vary topics.
+**Gap:** No articles yet on neuroscience, climate/energy, or geopolitics. Vary topics.
 
 ## Recent Digests (neuroscience — avoid repeating items)
 | Date | Key Topics Covered |
