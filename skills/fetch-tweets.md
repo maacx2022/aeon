@@ -26,7 +26,7 @@ Today is ${today}. Fetch 10 random tweets from **@${username}** on X.
 
 3. **Log to memory** what was fetched.
 
-4. **Send a Telegram notification** with a quick summary of the 10 tweets.
+4. **Send a notification via `tools/notify.sh`** with a quick summary of the 10 tweets.
 
 ## Environment Variables Required
 

@@ -11,10 +11,10 @@ Check the following:
 - [ ] Check recent GitHub issues for anything labeled urgent (use `gh issue list`)
 - [ ] Scan aeon.yml for scheduled skills — cross-reference with recent logs to find any that haven't run when expected
 
-Before sending any Telegram notification, grep memory/logs/ for the same item. If it appears in the last 48h of logs, skip it. Never notify about the same item twice.
+Before sending any notification, grep memory/logs/ for the same item. If it appears in the last 48h of logs, skip it. Never notify about the same item twice.
 
 If nothing needs attention, log "HEARTBEAT_OK" and end your response.
 
 If something needs attention:
-1. Send a concise Telegram notification about the finding
+1. Send a concise notification via `tools/notify.sh`
 2. Log the finding and action taken to memory/logs/${today}.md

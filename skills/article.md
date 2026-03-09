@@ -19,6 +19,6 @@ Steps:
 5. Save the article to: articles/${today}.md
 6. Update memory/MEMORY.md to record that this article was written and its topic.
 7. Log what you did to memory/logs/${today}.md.
-8. Send a Telegram notification: "New article written: [title]\n\nhttps://github.com/${repo}/blob/main/articles/${today}.md"
+8. Send a notification via `tools/notify.sh`: "New article written: [title]\n\nhttps://github.com/${repo}/blob/main/articles/${today}.md"
 
 Write complete, publication-ready content. No placeholders.

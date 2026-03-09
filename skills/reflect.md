@@ -17,6 +17,6 @@ Steps:
 5. Rewrite MEMORY.md with a clean, organized summary. Keep it concise — under 50 lines.
    Group by: recent articles, recent features, lessons learned, next priorities.
 6. Log what you did to memory/logs/${today}.md.
-7. Send a Telegram notification: "Memory consolidated — ${today}"
+7. Send a notification via `tools/notify.sh`: "Memory consolidated — ${today}"
 
 Be ruthless about pruning. Memory should be a living, useful document — not an append-only log.

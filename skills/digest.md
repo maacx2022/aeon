@@ -1,6 +1,6 @@
 ---
 name: Daily Digest
-description: Generate and send a daily digest on a configurable topic via Telegram
+description: Generate and send a daily digest on a configurable topic
 vars:
   - topic=neuroscience
   - search_terms=brain research, cognitive science, neuroimaging, mental health, BCIs, memory and learning
@@ -35,12 +35,11 @@ Today is ${today}. Generate and send a daily **${topic}** digest.
    source link — for tweets use `https://x.com/handle/status/ID`, for articles
    use the original URL. No item without a link.
 
-4. **Send the digest via Telegram.**
+4. **Send the digest via `tools/notify.sh`.**
 
 5. **Log results.** Update memory with what was sent.
 
 ## Environment Variables Required
 
 - `XAI_API_KEY` — X.AI API key for Grok x_search (optional, falls back to web search)
-- `TELEGRAM_BOT_TOKEN` — Telegram bot token
-- `TELEGRAM_CHAT_ID` — Chat to send the digest to
+- Notification channels configured via repo secrets (see CLAUDE.md)

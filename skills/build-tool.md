@@ -26,7 +26,7 @@ Your task is to design and build a new reusable skill.
 
 5. **Update memory.** Record what skill was built and when.
 
-6. **Send a Telegram notification** with what was built and what it does.
+6. **Send a notification via `tools/notify.sh`** with what was built and what it does.
 
 ## Guidelines
 

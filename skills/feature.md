@@ -15,6 +15,6 @@ Steps:
 5. Create a branch, commit, and open a PR with a clear title and description.
 6. Update memory/MEMORY.md to record what was built.
 7. Log what you did to memory/logs/${today}.md.
-8. Send a Telegram notification: "Feature built: [name] — PR: [url]"
+8. Send a notification via `tools/notify.sh`: "Feature built: [name] — PR: [url]"
 
 Write complete, working code. No TODOs or placeholders.
