@@ -83,7 +83,7 @@ jobs:
           SKILL_NAME="${{ steps.skill.outputs.name }}"
           COMMIT_PATHS=$(node scripts/load-skill.js --commits "$SKILL_NAME")
           if [ -n "$COMMIT_PATHS" ]; then
-            git add $COMMIT_PATHS
+            git add --ignore-errors $COMMIT_PATHS
             git diff --staged --quiet || git commit -m "chore($SKILL_NAME): auto-commit $(date +%Y-%m-%d)"
             git pull --rebase || true
             git push -u origin HEAD
