@@ -8,7 +8,7 @@
 #
 # Set enabled: true to activate a skill. All skills default to off.
 # On-demand skills (triggered via Telegram or workflow_dispatch) work regardless.
-#   On-demand: fetch-url, research-brief, idea-capture, fetch-tweets, search-papers
+#   On-demand: research-brief, idea-capture, fetch-tweets, search-papers
 
 skills:
   # --- Weekly skills (day-specific, listed first for priority) ---
@@ -21,12 +21,9 @@ skills:
   tweet-digest:
     enabled: false
     schedule: "0 13 * * 3"    # Wednesday at 1pm UTC
-  build-tool:
+  build-skill:
     enabled: false
     schedule: "0 4 * * 3"     # Wednesday at 4am UTC
-  dependency-check:
-    enabled: false
-    schedule: "0 3 * * 2"     # Tuesday at 3am UTC
   issue-triage:
     enabled: false
     schedule: "0 5 * * 2"     # Tuesday at 5am UTC
@@ -65,9 +62,6 @@ skills:
   article:
     enabled: false
     schedule: "0 8 * * *"     # Daily at 8am UTC
-  gas-report:
-    enabled: false
-    schedule: "0 9 * * *"     # Daily at 9am UTC
   github-monitor:
     enabled: false
     schedule: "0 10 * * *"    # Daily at 10am UTC

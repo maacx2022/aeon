@@ -15,13 +15,15 @@ Autonomous agent running on GitHub Actions, powered by Claude Code. 33 skills ac
 | `CLAUDE_CODE_OAUTH_TOKEN` | **Required** | All skills (see auth setup below) |
 | `TELEGRAM_BOT_TOKEN` | **Recommended** | Notifications + bidirectional messaging ([setup](#telegram-integration)) |
 | `TELEGRAM_CHAT_ID` | **Recommended** | Notifications + bidirectional messaging |
-| `DISCORD_WEBHOOK_URL` | Optional | Notifications |
-| `SLACK_WEBHOOK_URL` | Optional | Notifications |
+| `DISCORD_BOT_TOKEN` | Optional | Bidirectional messaging on Discord (read messages) |
+| `DISCORD_CHANNEL_ID` | Optional | Which Discord channel to monitor |
+| `DISCORD_WEBHOOK_URL` | Optional | Notifications (outbound) |
+| `SLACK_BOT_TOKEN` | Optional | Bidirectional messaging on Slack (read messages) |
+| `SLACK_CHANNEL_ID` | Optional | Which Slack channel to monitor |
+| `SLACK_WEBHOOK_URL` | Optional | Notifications (outbound) |
 | `XAI_API_KEY` | Optional | `digest`, `tweet-digest`, `fetch-tweets` — X/Twitter search via Grok |
-| `TAVILY_API_KEY` | Optional | Web search fallback for all research skills (free tier: 1000/mo) |
-| `ETHERSCAN_API_KEY` | Optional | `gas-report` — free at [etherscan.io/apis](https://etherscan.io/apis) |
 | `COINGECKO_API_KEY` | Optional | `token-alert` — works without, key improves rate limits |
-| `ALCHEMY_API_KEY` | Optional | `on-chain-monitor`, `wallet-digest`, `defi-monitor`, `gas-report` — use in RPC URLs in `on-chain-watches.yml` |
+| `ALCHEMY_API_KEY` | Optional | `on-chain-monitor`, `wallet-digest`, `defi-monitor` — use in RPC URLs in `on-chain-watches.yml` |
 
 4. **Edit `aeon.yml`** — set `enabled: true` on the skills you want
 5. **Test** — go to **Actions > Run Skill > Run workflow** and enter a skill name (e.g. `article`)
@@ -81,7 +83,7 @@ The schedule format is standard cron (`minute hour day-of-month month day-of-wee
 
 ### Changing the check frequency
 
-The workflow cron (`*/5 * * * *`) controls how often the scheduler checks. You can change this in `.github/workflows/run-skill.yml`:
+The workflow cron (`*/5 * * * *`) controls how often the scheduler checks. You can change this in `.github/workflows/aeon.yml`:
 
 ```yaml
 schedule:
@@ -138,17 +140,15 @@ GitHub Actions bills by **minutes used per month**. Only the time a runner is ac
 | `github-monitor` | Watch repos for stale PRs, new issues, and releases |
 | `issue-triage` | Label and prioritize new GitHub issues |
 | `changelog` | Generate a changelog from recent commits |
-| `dependency-check` | Flag outdated or vulnerable deps |
 | `code-health` | Report on TODOs, dead code, test coverage gaps |
 | `feature` | Build features from GitHub issues labeled `ai-build` |
-| `build-tool` | Design and create new skills |
+| `build-skill` | Design and create new skills |
 
 ### Crypto / On-chain
 
 | Skill | Description |
 |-------|-------------|
 | `token-alert` | Notify on price/volume anomalies for tracked tokens |
-| `gas-report` | Gas price trends on Ethereum/Base/Monad |
 | `wallet-digest` | Summarize recent activity across tracked wallets |
 | `on-chain-monitor` | Monitor contracts and addresses for notable events |
 | `defi-monitor` | Check pool health, positions, and yield rates |
@@ -174,15 +174,13 @@ GitHub Actions bills by **minutes used per month**. Only the time a runner is ac
 
 ## Tools
 
-Reusable scripts in `tools/` available to all skills:
+Reusable scripts available to all skills:
 
 | Tool | Description | Requires |
 |------|-------------|----------|
-| `tools/notify.sh "msg"` | Send to all configured channels (Telegram, Discord, Slack) | Secrets for each channel |
-| `tools/web-search.sh "query"` | Tavily API search (fallback — skills try WebSearch first) | `TAVILY_API_KEY` |
-| `tools/fetch-url.sh "url"` | Fetch URL as clean markdown via Jina Reader (fallback) | Nothing (free) |
+| `notify.sh "msg"` | Send to all configured channels (Telegram, Discord, Slack) | Secrets for each channel |
 
-Skills prefer Claude Code's built-in WebSearch and WebFetch. The shell tools are fallbacks for when built-in tools are unavailable or return insufficient results.
+Skills use Claude Code's built-in WebSearch and WebFetch for web searches and URL fetching.
 
 ## Notifications
 
@@ -288,7 +286,7 @@ Add the label `ai-build` to any GitHub issue. The workflow fires automatically a
 
 ## Adding a new skill
 
-1. Create `skills/your-skill.md` with instructions for Claude:
+1. Create `skills/your-skill/SKILL.md` with instructions for Claude:
 
 ```markdown
 ---
@@ -298,6 +296,8 @@ description: What this skill does
 
 Your task is to...
 ```
+
+Skills follow the [Agent Skills](https://github.com/vercel-labs/skills) format — compatible with Claude Code, Codex, Cursor, and 37+ agents.
 
 2. Add it to `aeon.yml` with a schedule and enable it:
 
@@ -314,7 +314,7 @@ That's it — no workflow changes needed. On-demand skills don't need a schedule
 
 ```bash
 # Run any skill locally (requires Claude Code CLI)
-claude -p "Today is $(date +%Y-%m-%d). Read and execute the skill defined in skills/article.md" --dangerously-skip-permissions
+claude -p "Today is $(date +%Y-%m-%d). Read and execute the skill defined in skills/article/SKILL.md" --dangerously-skip-permissions
 ```
 
 ## Two-repo strategy
@@ -346,44 +346,26 @@ This merges template changes without overwriting your personal content, since yo
 ```
 CLAUDE.md                ← agent identity (auto-loaded by Claude Code)
 aeon.yml                 ← skill schedules + enabled flags (edit this to configure)
-tools/
-  notify.sh              ← multi-channel notification (Telegram/Discord/Slack)
-  web-search.sh          ← Tavily API search (fallback)
-  fetch-url.sh           ← Jina Reader URL fetch (fallback)
-skills/
-  article.md             ← research trending topics, write a 600-800 word article
-  digest.md              ← search web + X/Twitter, send a topic digest via notifications
-  rss-digest.md          ← fetch RSS/Atom feeds, summarize new entries
-  hacker-news-digest.md  ← pull top HN stories, filter by your interests
-  paper-digest.md        ← query arXiv + Semantic Scholar, summarize new papers
-  tweet-digest.md        ← aggregate tweets from tracked accounts, group by theme
-  substack-draft.md      ← write a polished 800-1200 word draft with sources
-  research-brief.md      ← deep dive: web + papers + synthesis into a briefing
-  fetch-url.md           ← pull any URL, summarize key points (on-demand)
-  fetch-tweets.md        ← fetch 10 tweets from a specific X user (on-demand)
-  search-papers.md       ← Semantic Scholar API wrapper (reference tool)
-  pr-review.md           ← review open PR diffs, post actionable comments
-  github-monitor.md      ← watch repos for stale PRs, new issues, releases
-  issue-triage.md        ← auto-label and prioritize new GitHub issues
-  changelog.md           ← generate changelog from recent commits by type
-  dependency-check.md    ← scan for vulnerable or outdated dependencies
-  code-health.md         ← report TODOs, dead code, missing tests, large files
-  feature.md             ← read a GitHub issue, implement it, open a PR
-  build-tool.md          ← design and create new skills from ideas
-  token-alert.md         ← check CoinGecko for price/volume anomalies
-  gas-report.md          ← query RPCs for gas prices, track 7-day trends
-  wallet-digest.md       ← summarize balances and transactions across wallets
-  on-chain-monitor.md    ← poll contracts for events, alert on notable activity
-  defi-monitor.md        ← check pool TVL, APR, position health, IL
-  morning-brief.md       ← aggregate priorities, headlines, schedule into one message
-  weekly-review.md       ← synthesize the week's logs into a retrospective
-  goal-tracker.md        ← compare progress against goals in MEMORY.md
-  idea-capture.md        ← capture a quick note from Telegram into memory
-  heartbeat.md           ← core loop: scan for anything needing attention
-  memory-flush.md        ← promote important log entries into MEMORY.md
-  reflect.md             ← consolidate memory, prune stale entries
-  skill-health.md        ← audit which skills ran, missed, or errored
-  self-review.md         ← review output quality, reliability, suggest improvements
+notify.sh                ← multi-channel notification (Telegram/Discord/Slack)
+skills/                  ← each skill is a directory with SKILL.md (Agent Skills format)
+  article/SKILL.md       ← research trending topics, write a 600-800 word article
+  digest/SKILL.md        ← search web + X/Twitter, send a topic digest via notifications
+  rss-digest/SKILL.md    ← fetch RSS/Atom feeds, summarize new entries
+  hacker-news-digest/    ← pull top HN stories, filter by your interests
+  paper-digest/          ← query arXiv + Semantic Scholar, summarize new papers
+  tweet-digest/          ← aggregate tweets from tracked accounts, group by theme
+  fetch-tweets/          ← search X by keyword, user, or hashtag (on-demand)
+  search-papers/         ← Semantic Scholar API wrapper (on-demand)
+  pr-review/             ← review open PR diffs, post actionable comments
+  github-monitor/        ← watch repos for stale PRs, new issues, releases
+  feature/               ← read a GitHub issue, implement it, open a PR
+  build-skill/           ← design and create new skills from ideas
+  token-alert/           ← check CoinGecko for price/volume anomalies
+  wallet-digest/         ← summarize balances and transactions across wallets
+  on-chain-monitor/      ← poll contracts for events, alert on notable activity
+  defi-monitor/          ← check pool TVL, APR, position health, IL
+  heartbeat/             ← core loop: scan for anything needing attention
+  ...                    ← 30 skills total (see skills/ directory)
 memory/
   MEMORY.md              ← index: goals, active topics, pointers to topic files
   topics/                ← detailed notes by topic (crypto.md, research.md, etc.)
@@ -393,6 +375,5 @@ memory/
   on-chain-watches.yml   ← blockchain addresses to watch
 .github/
   workflows/
-    run-skill.yml        ← scheduled skill runner
-    telegram.yml         ← Telegram message polling + webhook
+    aeon.yml             ← unified workflow (skills + Telegram)
 ```
