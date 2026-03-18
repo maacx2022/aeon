@@ -167,15 +167,15 @@ jobs:
 
       - name: Checkout repo
         if: steps.msg.outputs.source != ''
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node.js
         if: steps.msg.outputs.source != ''
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Install Claude Code
         if: steps.msg.outputs.source != ''
@@ -309,7 +309,7 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 

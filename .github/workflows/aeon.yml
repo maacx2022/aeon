@@ -87,7 +87,7 @@ jobs:
     steps:
       - name: Early checkout
         if: github.event_name == 'issues'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -112,15 +112,15 @@ jobs:
 
       - name: Checkout repo
         if: steps.work.outputs.mode != ''
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node.js
         if: steps.work.outputs.mode != ''
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Install Claude Code
         if: steps.work.outputs.mode != ''

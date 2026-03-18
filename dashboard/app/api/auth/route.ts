@@ -72,8 +72,8 @@ export async function POST(request: Request) {
       if (tokenChars.length === 0) {
         // First line with the token
         tokenChars.push(trimmed)
-      } else if (/^[A-Za-z0-9_\-]+$/.test(trimmed) && trimmed.length < 20) {
-        // Continuation line (short, all valid token chars — like "wAA")
+      } else if (/^[A-Za-z0-9_\-]+$/.test(trimmed)) {
+        // Continuation line (all valid token chars — wrapped portion of token)
         tokenChars.push(trimmed)
       } else {
         break

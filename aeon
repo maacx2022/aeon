@@ -12,5 +12,15 @@ if [ ! -d node_modules ]; then
   npm install
 fi
 
-echo "Starting Aeon dashboard..."
-npm run dev
+PORT="${PORT:-5555}"
+
+echo ""
+echo "  ╔══════════════════════════════════════╗"
+echo "  ║         ⚡ Aeon Dashboard ⚡          ║"
+echo "  ║                                      ║"
+echo "  ║   ➜  http://localhost:${PORT}           ║"
+echo "  ║                                      ║"
+echo "  ╚══════════════════════════════════════╝"
+echo ""
+
+npm run dev -- -p "$PORT"
