@@ -1044,7 +1044,7 @@ export default function Dashboard() {
                   <div className="space-y-3">
                     {runSummary ? (
                       <pre className="text-[11px] leading-relaxed font-mono text-zinc-300 whitespace-pre-wrap break-words">
-                        {runSummary.replace(/\x1b\[[0-9;]*m/g, '')}
+                        {runSummary.replace(/\x1b\[[0-9;]*m/g, '').replace(/^\d{4}-\d{2}-\d{2}T[\d:.]+Z ?/gm, '')}
                       </pre>
                     ) : (
                       <p className="text-[11px] text-zinc-600 italic">No summary available</p>

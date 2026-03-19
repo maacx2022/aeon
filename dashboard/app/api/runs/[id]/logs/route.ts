@@ -70,14 +70,16 @@ export async function GET(
     const summaryLines: string[] = []
     let inSummary = false
     for (const line of outputLines) {
-      // Strip ANSI escape codes for matching
-      const clean = line.replace(/\x1b\[[0-9;]*m/g, '')
+      // Strip ANSI escape codes and GitHub Actions timestamp prefix (e.g. "2026-03-19T23:20:35.6487406Z ")
+      const clean = line
+        .replace(/\x1b\[[0-9;]*m/g, '')
+        .replace(/^\d{4}-\d{2}-\d{2}T[\d:.]+Z\s?/, '')
       if (/^#{1,3}\s+Summary/.test(clean)) {
         inSummary = true
         summaryLines.push(line)
       } else if (inSummary) {
-        // Stop at the next heading or end
-        if (/^#{1,3}\s+/.test(clean) && !clean.startsWith('###')) {
+        // Stop at the next heading (## level) but allow ### subheadings
+        if (/^#{1,2}\s+/.test(clean) && !/^###/.test(clean)) {
           break
         }
         summaryLines.push(line)
