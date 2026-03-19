@@ -65,17 +65,22 @@ export async function GET(
     // Use filtered logs if we found the Run step, otherwise show everything
     const output = runStepLines.length > 0 ? runStepLines.join('\n') : logs
 
-    // Extract notify messages (lines containing ./notify calls or their output)
-    const notifyLines: string[] = []
+    // Extract the ## Summary block that Claude outputs at the end of each skill run
     const outputLines = output.split('\n')
-    for (let i = 0; i < outputLines.length; i++) {
-      const line = outputLines[i]
-      // Match Claude's ./notify calls and the surrounding context
-      if (line.includes('./notify') || line.includes('sendMessage') || line.includes('Notification sent')) {
-        // Grab a few lines of context around notify calls
-        for (let j = Math.max(0, i - 1); j <= Math.min(outputLines.length - 1, i + 2); j++) {
-          if (!notifyLines.includes(outputLines[j])) notifyLines.push(outputLines[j])
+    const summaryLines: string[] = []
+    let inSummary = false
+    for (const line of outputLines) {
+      // Strip ANSI escape codes for matching
+      const clean = line.replace(/\x1b\[[0-9;]*m/g, '')
+      if (/^#{1,3}\s+Summary/.test(clean)) {
+        inSummary = true
+        summaryLines.push(line)
+      } else if (inSummary) {
+        // Stop at the next heading or end
+        if (/^#{1,3}\s+/.test(clean) && !clean.startsWith('###')) {
+          break
         }
+        summaryLines.push(line)
       }
     }
 
@@ -91,7 +96,7 @@ export async function GET(
       status: info.status,
       conclusion: info.conclusion,
       logs: trimmed,
-      summary: notifyLines.length > 0 ? notifyLines.join('\n') : '',
+      summary: summaryLines.length > 0 ? summaryLines.join('\n') : '',
     })
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : 'Failed to fetch logs'

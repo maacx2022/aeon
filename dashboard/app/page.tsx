@@ -266,7 +266,9 @@ export default function Dashboard() {
   // Run logs viewer
   const [selectedRun, setSelectedRun] = useState<Run | null>(null)
   const [runLogs, setRunLogs] = useState('')
+  const [runSummary, setRunSummary] = useState('')
   const [logsLoading, setLogsLoading] = useState(false)
+  const [showFullLogs, setShowFullLogs] = useState(false)
   const logsEndRef = useRef<HTMLDivElement>(null)
 
   // Import modal
@@ -437,15 +439,15 @@ export default function Dashboard() {
   const viewRunLogs = async (run: Run) => {
     setSelectedRun(run)
     setRunLogs('')
+    setRunSummary('')
+    setShowFullLogs(false)
     setLogsLoading(true)
     try {
       const res = await fetch(`/api/runs/${run.id}/logs`)
       if (res.ok) {
         const data = await res.json()
-        const display = data.summary
-          ? `── Output ──\n${data.summary}\n\n── Full Logs ──\n${data.logs || '(No logs)'}`
-          : data.logs || '(No logs)'
-        setRunLogs(display)
+        setRunSummary(data.summary || '')
+        setRunLogs(data.logs || '(No logs)')
       } else {
         setRunLogs('Failed to fetch logs')
       }
@@ -1005,7 +1007,7 @@ export default function Dashboard() {
             <div className="flex-1 flex flex-col min-h-0">
               <div className="flex items-center gap-2 px-4 py-2.5 border-b border-zinc-800/30 shrink-0">
                 <button
-                  onClick={() => { setSelectedRun(null); setRunLogs('') }}
+                  onClick={() => { setSelectedRun(null); setRunLogs(''); setRunSummary(''); setShowFullLogs(false) }}
                   className="text-zinc-500 hover:text-zinc-300 text-xs transition-colors"
                 >
                   &larr;
@@ -1039,10 +1041,28 @@ export default function Dashboard() {
                     </div>
                   </div>
                 ) : (
-                  <pre className="text-[11px] leading-relaxed font-mono text-zinc-400 whitespace-pre-wrap break-words">
-                    {runLogs}
+                  <div className="space-y-3">
+                    {runSummary ? (
+                      <pre className="text-[11px] leading-relaxed font-mono text-zinc-300 whitespace-pre-wrap break-words">
+                        {runSummary.replace(/\x1b\[[0-9;]*m/g, '')}
+                      </pre>
+                    ) : (
+                      <p className="text-[11px] text-zinc-600 italic">No summary available</p>
+                    )}
+                    <button
+                      onClick={() => setShowFullLogs(!showFullLogs)}
+                      className="text-[10px] text-zinc-600 hover:text-zinc-400 transition-colors flex items-center gap-1"
+                    >
+                      <span className="transform transition-transform" style={{ display: 'inline-block', transform: showFullLogs ? 'rotate(90deg)' : 'rotate(0deg)' }}>&rsaquo;</span>
+                      Full logs
+                    </button>
+                    {showFullLogs && (
+                      <pre className="text-[11px] leading-relaxed font-mono text-zinc-500 whitespace-pre-wrap break-words border-t border-zinc-800/30 pt-3">
+                        {runLogs.replace(/\x1b\[[0-9;]*m/g, '')}
+                      </pre>
+                    )}
                     <div ref={logsEndRef} />
-                  </pre>
+                  </div>
                 )}
               </div>
             </div>
