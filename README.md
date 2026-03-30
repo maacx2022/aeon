@@ -140,6 +140,19 @@ claude setup-token   # opens browser → prints sk-ant-oat01-... (valid 1 year)
 | `reflect` | Review recent activity, consolidate memory, and prune stale entries |
 | `skill-health` | Check which scheduled skills haven't run recently |
 | `self-review` | Weekly audit of what Aeon did, what failed, and what to improve |
+| `rss-feed` | Generate an Atom XML feed from articles in the repo |
+
+---
+
+## RSS Feed
+
+Subscribe to Aeon's article output via Atom feed:
+
+```
+https://raw.githubusercontent.com/<owner>/<repo>/main/articles/feed.xml
+```
+
+Add this URL to any RSS reader (Feedly, Miniflux, NetNewsWire, etc.) to get new articles as they're published. The feed is regenerated daily or after each content-generating skill runs.
 
 ---
 
@@ -307,9 +320,60 @@ npx skills find "crypto trading"
 
 Installed skills land in `skills/` and are added to `aeon.yml` disabled. Flip `enabled: true` to activate.
 
+### Install individual skills from Aeon
+
+Every skill in this repo is independently installable. Browse the full catalog in [`skills.json`](skills.json) or use the CLI:
+
+```bash
+# Install a single skill
+./add-skill aaronjmars/aeon token-alert
+
+# Install multiple skills
+./add-skill aaronjmars/aeon token-alert polymarket hn-digest
+
+# Install everything
+./add-skill aaronjmars/aeon --all
+
+# Browse available skills
+./add-skill aaronjmars/aeon --list
+```
+
+### Export a skill for distribution
+
+Package any skill as a standalone directory (with a generated README) for sharing:
+
+```bash
+./export-skill token-alert              # exports to ./exports/token-alert/
+./export-skill token-alert --tar        # also creates a .tar.gz archive
+./export-skill --list                   # list all exportable skills
+```
+
 ### Trigger feature builds from issues
 
 Label any GitHub issue `ai-build` → workflow fires → Claude reads the issue, implements it, opens a PR.
+
+---
+
+## Use as GitHub Agentic Workflow
+
+Don't need the full agent? Grab individual workflow templates and drop them into any repo. These work with [GitHub Agentic Workflows](https://github.blog/changelog/2026-02-13-github-agentic-workflows-are-now-in-technical-preview/) — plain Markdown files in `.github/workflows/` that run with any supported agent engine.
+
+| Template | What it does | Trigger |
+|----------|-------------|---------|
+| [issue-triage.md](workflows/issue-triage.md) | Auto-label and prioritize new issues | On issue opened |
+| [pr-review.md](workflows/pr-review.md) | Review PRs for bugs, security, and quality | On PR opened/updated |
+| [changelog.md](workflows/changelog.md) | Categorized changelog from recent commits | Weekly |
+| [security-digest.md](workflows/security-digest.md) | Monitor advisories for your dependencies | Daily |
+| [code-health.md](workflows/code-health.md) | Audit TODOs, dead code, test gaps | Weekly |
+
+```bash
+# Copy a template into your repo
+curl -O https://raw.githubusercontent.com/aaronjmars/aeon/main/workflows/pr-review.md
+mv pr-review.md .github/workflows/
+git add .github/workflows/pr-review.md && git commit -m "Add PR review workflow"
+```
+
+Each template is self-contained Markdown — edit the trigger, criteria, or format to fit your project. See [`workflows/README.md`](workflows/README.md) for details.
 
 ---
 
@@ -346,14 +410,18 @@ Every skill reads `CLAUDE.md`, so identity propagates automatically.
 ```
 CLAUDE.md                ← agent identity (auto-loaded by Claude Code)
 aeon.yml                 ← skill schedules + enabled flags
+skills.json              ← machine-readable skill catalog (50 skills)
 ./notify                 ← multi-channel notifications
 ./add-skill              ← import skills from GitHub repos
+./export-skill           ← package skills for standalone distribution
+./generate-skills-json   ← regenerate skills.json from SKILL.md files
 soul/                    ← optional identity files
 skills/                  ← each skill is SKILL.md (Agent Skills format)
   article/
   digest/
   heartbeat/
-  ...                    ← 47 skills total
+  ...                    ← 50 skills total
+workflows/               ← GitHub Agentic Workflow templates (.md)
 memory/
   MEMORY.md              ← goals, active topics, pointers
   topics/                ← detailed notes by topic
