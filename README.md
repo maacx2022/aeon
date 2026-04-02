@@ -6,7 +6,7 @@
 
 <p align="center">
   <strong>Background intelligence that evolves with you.</strong><br>
-  Autonomous agent on GitHub Actions, powered by Claude Code. 47 skills across research, dev tooling, crypto monitoring, and productivity — all off by default, enable what you need.
+  Autonomous agent on GitHub Actions, powered by Claude Code. 51 skills across research, dev tooling, crypto monitoring, and productivity — all off by default, enable what you need.
 </p>
 
 <p align="center">
@@ -141,6 +141,17 @@ claude setup-token   # opens browser → prints sk-ant-oat01-... (valid 1 year)
 | `skill-health` | Check which scheduled skills haven't run recently |
 | `self-review` | Weekly audit of what Aeon did, what failed, and what to improve |
 | `rss-feed` | Generate an Atom XML feed from articles in the repo |
+| `update-gallery` | Sync articles to the GitHub Pages gallery with Jekyll frontmatter |
+
+---
+
+## GitHub Pages Gallery
+
+Aeon publishes articles to a browsable gallery via GitHub Pages. After merging, enable it in **Settings → Pages** → source `Deploy from a branch`, branch `main`, folder `/docs`.
+
+The gallery will be live at `https://<username>.github.io/aeon`.
+
+The `update-gallery` skill syncs `articles/*.md` → `docs/_posts/` with proper Jekyll frontmatter on a weekly schedule. Enable it in `aeon.yml` to keep the gallery up to date automatically.
 
 ---
 
@@ -410,17 +421,18 @@ Every skill reads `CLAUDE.md`, so identity propagates automatically.
 ```
 CLAUDE.md                ← agent identity (auto-loaded by Claude Code)
 aeon.yml                 ← skill schedules + enabled flags
-skills.json              ← machine-readable skill catalog (50 skills)
+skills.json              ← machine-readable skill catalog (51 skills)
 ./notify                 ← multi-channel notifications
 ./add-skill              ← import skills from GitHub repos
 ./export-skill           ← package skills for standalone distribution
 ./generate-skills-json   ← regenerate skills.json from SKILL.md files
+docs/                    ← GitHub Pages gallery (Jekyll)
 soul/                    ← optional identity files
 skills/                  ← each skill is SKILL.md (Agent Skills format)
   article/
   digest/
   heartbeat/
-  ...                    ← 50 skills total
+  ...                    ← 51 skills total
 workflows/               ← GitHub Agentic Workflow templates (.md)
 memory/
   MEMORY.md              ← goals, active topics, pointers
