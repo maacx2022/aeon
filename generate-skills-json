@@ -103,6 +103,18 @@ count_files() {
   find "$skill_dir" -type f ! -name "SKILL.md" 2>/dev/null | wc -l | tr -d ' '
 }
 
+# Get 7-char git SHA of last commit touching a SKILL.md
+get_skill_sha() {
+  local slug="$1"
+  git -C "$ROOT" log --follow --format="%H" -1 -- "skills/$slug/SKILL.md" 2>/dev/null | cut -c1-7 || echo ""
+}
+
+# Get YYYY-MM-DD date of last commit touching a SKILL.md
+get_skill_updated() {
+  local slug="$1"
+  git -C "$ROOT" log --follow --format="%as" -1 -- "skills/$slug/SKILL.md" 2>/dev/null || echo ""
+}
+
 # Start JSON output
 echo -n '{"version":"1.0","generated":"' > "$OUTPUT"
 echo -n "$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$OUTPUT"
@@ -126,6 +138,8 @@ for skill_dir in "$SKILLS_DIR"/*/; do
   schedule=$(get_schedule "$slug")
   category="${CATEGORIES[$slug]:-other}"
   extra_files=$(count_files "$skill_dir")
+  sha=$(get_skill_sha "$slug")
+  updated=$(get_skill_updated "$slug")
 
   # Escape JSON strings
   name="${name//\\/\\\\}"
@@ -139,7 +153,7 @@ for skill_dir in "$SKILLS_DIR"/*/; do
     echo -n ',' >> "$OUTPUT"
   fi
 
-  echo -n "{\"slug\":\"$slug\",\"name\":\"$name\",\"description\":\"$description\",\"category\":\"$category\",\"schedule\":\"$schedule\",\"var\":\"$var\",\"files\":$extra_files,\"install\":\"./add-skill aaronjmars/aeon $slug\"}" >> "$OUTPUT"
+  echo -n "{\"slug\":\"$slug\",\"name\":\"$name\",\"description\":\"$description\",\"category\":\"$category\",\"schedule\":\"$schedule\",\"var\":\"$var\",\"files\":$extra_files,\"sha\":\"$sha\",\"updated\":\"$updated\",\"install\":\"./add-skill aaronjmars/aeon $slug\"}" >> "$OUTPUT"
 
   TOTAL=$((TOTAL + 1))
 done
