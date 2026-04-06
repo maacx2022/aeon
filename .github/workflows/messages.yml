@@ -257,9 +257,12 @@ jobs:
           - For anything else, do your best and explain what you did.
 
           Always send your response back via ./notify so the user sees it."
-          CLAUDE_OUTPUT=$(echo "$PROMPT" | claude -p - \
+          if ! CLAUDE_OUTPUT=$(echo "$PROMPT" | claude -p - \
             --model "$MODEL" --allowedTools "$ALLOWED" \
-            --output-format json)
+            --output-format json 2>&1); then
+            echo "::error::Claude CLI failed. Output: $CLAUDE_OUTPUT"
+            exit 1
+          fi
 
           # Extract and print the text result so logs still show skill output
           echo "$CLAUDE_OUTPUT" | jq -r '.result // empty'
@@ -482,9 +485,10 @@ jobs:
 
             [ "$SHOULD_RUN" = "false" ] && continue
 
-            # Smart dedup: skip if dispatched within last 90 minutes
-            if recently_dispatched "$SKILL" 90; then
-              echo "Skipping $SKILL (dispatched within last 90 min)"
+            # Smart dedup: skip if dispatched within last 150 minutes
+            # (catch-up logic spans ~2 hours, so 90 min was too short)
+            if recently_dispatched "$SKILL" 150; then
+              echo "Skipping $SKILL (dispatched within last 150 min)"
               continue
             fi
 

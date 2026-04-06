@@ -39,10 +39,14 @@ on:
           - polymarket
           - polymarket-comments
           - pr-review
+          - push-recap
           - reddit-digest
           - reflect
           - refresh-x
           - reply-maker
+          - repo-actions
+          - repo-article
+          - repo-pulse
           - research-brief
           - rss-digest
           - search-papers
@@ -174,13 +178,14 @@ jobs:
           COINGECKO_API_KEY: ${{ secrets.COINGECKO_API_KEY }}
           ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
           JSONRENDER_ENABLED: ${{ vars.JSONRENDER_ENABLED || 'true' }}
+          SKILL_VAR: ${{ inputs.var }}
         run: |
           TODAY=$(date -u +%Y-%m-%d)
           SKILL_NAME="${{ steps.skill.outputs.name }}"
           export SKILL_NAME
           CONFIG_MODEL=$(grep -E '^model:' aeon.yml | sed 's/^model: *//' | tr -d ' ')
           # Check for per-skill model override in aeon.yml
-          SKILL_MODEL=$(awk "/^  ${SKILL_NAME}:/{found=1} found && /model:/{print; exit}" aeon.yml | sed 's/.*model: *"\?\([^"]*\)"\?/\1/' | tr -d ' ')
+          SKILL_MODEL=$(awk "/^  ${SKILL_NAME}:/{found=1} found && /model:/{print; exit}" aeon.yml | sed 's/.*model: *"\?\([^"]*\)"\?/\1/' | tr -d ' }"')
           INPUT_MODEL="${{ inputs.model }}"
           if [ -n "$INPUT_MODEL" ] && [ "$INPUT_MODEL" != "(config default)" ]; then
             MODEL="$INPUT_MODEL"
@@ -195,11 +200,29 @@ jobs:
           #!/usr/bin/env bash
           set -euo pipefail
           MSG="$1"
+
+          # Telegram: 4096 char limit, strict Markdown parsing
           if [ -n "${TELEGRAM_BOT_TOKEN:-}" ] && [ -n "${TELEGRAM_CHAT_ID:-}" ]; then
-            curl -sf -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            TG_MSG="$MSG"
+            # Truncate to 4000 chars (leave room for truncation notice)
+            if [ ${#TG_MSG} -gt 4000 ]; then
+              TG_MSG="${TG_MSG:0:3990}
+
+          ...(truncated)"
+            fi
+            # Try Markdown first, fall back to plain text if it fails
+            TG_RESULT=$(curl -s -w "\n%{http_code}" -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
               -H "Content-Type: application/json" \
-              -d "$(jq -n --arg chat "$TELEGRAM_CHAT_ID" --arg text "$MSG" '{chat_id: $chat, text: $text, parse_mode: "Markdown"}')" > /dev/null || true
+              -d "$(jq -n --arg chat "$TELEGRAM_CHAT_ID" --arg text "$TG_MSG" '{chat_id: $chat, text: $text, parse_mode: "Markdown"}')" 2>/dev/null)
+            TG_HTTP=$(echo "$TG_RESULT" | tail -1)
+            TG_OK=$(echo "$TG_RESULT" | sed '$d' | jq -r '.ok // false' 2>/dev/null || echo "false")
+            if [ "$TG_HTTP" != "200" ] || [ "$TG_OK" != "true" ]; then
+              curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+                -H "Content-Type: application/json" \
+                -d "$(jq -n --arg chat "$TELEGRAM_CHAT_ID" --arg text "$TG_MSG" '{chat_id: $chat, text: $text}')" > /dev/null 2>&1 || true
+            fi
           fi
+
           if [ -n "${DISCORD_WEBHOOK_URL:-}" ]; then
             curl -sf -X POST "$DISCORD_WEBHOOK_URL" \
               -H "Content-Type: application/json" \
@@ -226,7 +249,7 @@ jobs:
           ALLOWED="$ALLOWED,Bash(head:*),Bash(tail:*),Bash(wc:*),Bash(sort:*),Bash(grep:*)"
 
           SKILL_NAME="${{ steps.skill.outputs.name }}"
-          VAR="${{ inputs.var }}"
+          VAR="$SKILL_VAR"
           PROMPT="Today is $TODAY. Read and execute the skill defined in skills/${SKILL_NAME}/SKILL.md"
           if [ -n "$VAR" ]; then
             PROMPT="$PROMPT
@@ -234,9 +257,12 @@ jobs:
           Use this variable (override the default in the skill file):
           var=$VAR"
           fi
-          CLAUDE_OUTPUT=$(echo "$PROMPT" | claude -p - \
+          if ! CLAUDE_OUTPUT=$(echo "$PROMPT" | claude -p - \
             --model "$MODEL" --allowedTools "$ALLOWED" \
-            --output-format json)
+            --output-format json 2>&1); then
+            echo "::error::Claude CLI failed. Output: $CLAUDE_OUTPUT"
+            exit 1
+          fi
 
           # Extract and print the text result so logs still show skill output
           echo "$CLAUDE_OUTPUT" | jq -r '.result // empty'
@@ -311,8 +337,17 @@ jobs:
 
           # Commit any remaining changes on main
           git add -A
-          git diff --staged --quiet && exit 0
-          git commit -m "chore($LABEL): auto-commit $(date +%Y-%m-%d)"
+          if git diff --staged --quiet; then
+            # Nothing new to commit — but Claude may have committed during its run.
+            # Check for unpushed commits and push them if any exist.
+            if [ "$(git rev-list origin/main..HEAD --count 2>/dev/null)" = "0" ]; then
+              echo "No changes to commit or push"
+              exit 0
+            fi
+            echo "No new changes, but found unpushed commits — pushing"
+          else
+            git commit -m "chore($LABEL): auto-commit $(date +%Y-%m-%d)"
+          fi
           for i in 1 2 3; do
             # Pull and rebase onto latest remote
             if ! git pull --rebase origin main 2>/dev/null; then
