@@ -15,6 +15,7 @@ on:
           - changelog
           - code-health
           - daily-routine
+          - deep-research
           - defi-monitor
           - defi-overview
           - digest
@@ -31,6 +32,7 @@ on:
           - issue-triage
           - list-digest
           - memory-flush
+          - monitor-polymarket
           - monitor-runners
           - morning-brief
           - on-chain-monitor
@@ -43,23 +45,28 @@ on:
           - reddit-digest
           - reflect
           - refresh-x
+          - remix-tweets
           - reply-maker
           - repo-actions
           - repo-article
           - repo-pulse
           - research-brief
           - rss-digest
+          - rss-feed
           - search-papers
           - search-skill
           - security-digest
           - self-review
           - skill-health
+          - skill-security-scan
           - startup-idea
+          - technical-explainer
           - token-alert
           - token-movers
           - token-pick
           - trending-coins
           - tweet-digest
+          - update-gallery
           - wallet-digest
           - weekly-review
           - write-tweet

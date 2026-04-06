@@ -2,6 +2,7 @@
 #
 # Enable skills by setting enabled: true. Multiple skills at the same time run in parallel.
 # Set var: "value" to pass a default parameter to the skill.
+# Set model: "claude-sonnet-4-6" per skill to override the default model (cost optimization).
 
 skills:
   # --- Morning aggregation (7 AM UTC) ---
@@ -31,11 +32,13 @@ skills:
   defi-overview: { enabled: false, schedule: "0 12 * * *" }
   polymarket: { enabled: false, schedule: "0 12 * * *" }
   polymarket-comments: { enabled: false, schedule: "0 12 * * *" }
+  monitor-polymarket: { enabled: false, schedule: "30 12 * * *", model: "claude-sonnet-4-6" }  # monitor specific markets for 24h price moves and volume changes
   monitor-runners: { enabled: false, schedule: "0 12 * * *" }
   token-pick: { enabled: false, schedule: "0 12 * * *" }
 
   # --- Afternoon (2 PM UTC) ---
   article: { enabled: false, schedule: "0 14 * * *" }
+  technical-explainer: { enabled: false, schedule: "30 14 * * *" }  # visual technical explanation with AI-generated hero image
   digest: { enabled: false, schedule: "0 14 * * *" }
   research-brief: { enabled: false, schedule: "0 14 * * *" }
   deep-research: { enabled: false, schedule: "workflow_dispatch", var: "" }  # on-demand only — set var to research topic
@@ -64,6 +67,7 @@ skills:
   list-digest: { enabled: false, schedule: "0 17 * * *" }
   write-tweet: { enabled: false, schedule: "0 17 * * *" }
   reply-maker: { enabled: false, schedule: "0 17 * * *" }
+  remix-tweets: { enabled: false, schedule: "30 17 * * *" }  # 10 rephrased versions of random past tweets
 
   # --- Feed generation (5:30 PM UTC, after content skills) ---
   rss-feed: { enabled: false, schedule: "30 17 * * *" }
