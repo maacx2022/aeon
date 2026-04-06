@@ -2,6 +2,7 @@
 name: Monitor Polymarket
 description: Monitor specific prediction markets for 24h price moves, volume changes, and fresh comments
 var: ""
+tags: [crypto]
 ---
 > **${var}** — Event slug to monitor (e.g. "us-x-iran-ceasefire-by"). If empty, reads the watchlist from `skills/monitor-polymarket/watchlist.md`.
 

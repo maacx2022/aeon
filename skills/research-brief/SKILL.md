@@ -2,6 +2,7 @@
 name: Research Brief
 description: Deep dive on a topic combining web search, papers, and synthesis
 var: ""
+tags: [research]
 ---
 > **${var}** — Topic to research. Recommended for best results.
 

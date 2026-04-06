@@ -2,6 +2,7 @@
 name: RSS Digest
 description: Fetch, summarize, and deliver RSS feed highlights
 var: ""
+tags: [news]
 ---
 > **${var}** — Topic filter for items. If empty, includes all relevant items.
 

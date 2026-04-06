@@ -2,6 +2,7 @@
 name: Token Movers
 description: Top movers, losers, and trending coins from CoinGecko
 var: ""
+tags: [crypto]
 ---
 > **${var}** — Token symbol or category to highlight (e.g. "SOL", "layer-2", "meme coins"). If empty, shows top movers, losers, and trending coins.
 

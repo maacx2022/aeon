@@ -2,6 +2,7 @@
 name: DeFi Overview
 description: Daily overview of DeFi activity from DeFiLlama — TVL changes, top chains, top protocols
 var: ""
+tags: [crypto]
 ---
 > **${var}** — Chain or protocol to focus on (e.g. "solana", "aave", "arbitrum"). If empty, shows the full overview.
 

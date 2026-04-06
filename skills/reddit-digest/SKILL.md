@@ -2,6 +2,7 @@
 name: Reddit Digest
 description: Fetch and summarize top Reddit posts from tracked subreddits
 var: ""
+tags: [news]
 ---
 > **${var}** — Topic filter or subreddit name. If empty, checks all tracked subreddits.
 

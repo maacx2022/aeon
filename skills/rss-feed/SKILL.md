@@ -2,6 +2,7 @@
 name: RSS Feed Generator
 description: Generate an Atom XML feed from articles in the repo
 var: ""
+tags: [content]
 ---
 > **${var}** — Base URL override for article links. If empty, uses `https://github.com/${repo}/blob/main/`.
 

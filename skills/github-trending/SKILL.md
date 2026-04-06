@@ -2,6 +2,7 @@
 name: GitHub Trending
 description: Top 10 trending repos on GitHub right now
 var: ""
+tags: [dev]
 ---
 > **${var}** — Language filter (e.g. "python", "typescript", "rust"). If empty, shows all languages.
 

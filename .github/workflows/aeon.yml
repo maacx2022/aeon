@@ -5,71 +5,9 @@ on:
   workflow_dispatch:
     inputs:
       skill:
-        description: 'Skill'
+        description: 'Skill name (must match a directory under skills/)'
         required: true
-        type: choice
-        options:
-          - action-converter
-          - article
-          - build-skill
-          - changelog
-          - code-health
-          - daily-routine
-          - deep-research
-          - defi-monitor
-          - defi-overview
-          - digest
-          - feature
-          - fetch-tweets
-          - github-issues
-          - github-monitor
-          - github-trending
-          - goal-tracker
-          - hacker-news-digest
-          - heartbeat
-          - hn-digest
-          - idea-capture
-          - issue-triage
-          - list-digest
-          - memory-flush
-          - monitor-polymarket
-          - monitor-runners
-          - morning-brief
-          - on-chain-monitor
-          - paper-digest
-          - paper-pick
-          - polymarket
-          - polymarket-comments
-          - pr-review
-          - push-recap
-          - reddit-digest
-          - reflect
-          - refresh-x
-          - remix-tweets
-          - reply-maker
-          - repo-actions
-          - repo-article
-          - repo-pulse
-          - research-brief
-          - rss-digest
-          - rss-feed
-          - search-papers
-          - search-skill
-          - security-digest
-          - self-review
-          - skill-health
-          - skill-security-scan
-          - startup-idea
-          - technical-explainer
-          - token-alert
-          - token-movers
-          - token-pick
-          - trending-coins
-          - tweet-digest
-          - update-gallery
-          - wallet-digest
-          - weekly-review
-          - write-tweet
+        type: string
       model:
         description: 'Model'
         required: false
@@ -165,6 +103,42 @@ jobs:
         if: steps.work.outputs.mode != ''
         run: npm install -g @anthropic-ai/claude-code
 
+      - name: Validate skill secrets
+        if: steps.work.outputs.mode != ''
+        env:
+          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+          COINGECKO_API_KEY: ${{ secrets.COINGECKO_API_KEY }}
+          ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
+          REPLICATE_API_TOKEN: ${{ secrets.REPLICATE_API_TOKEN }}
+          SUPERNOTES_API_KEY: ${{ secrets.SUPERNOTES_API_KEY }}
+        run: |
+          SKILL_FILE="skills/${{ steps.skill.outputs.name }}/SKILL.md"
+          [ ! -f "$SKILL_FILE" ] && exit 0
+
+          # Extract secret references (VAR_API_KEY, VAR_TOKEN, etc.)
+          SECRETS=$(grep -oE '\$\{?[A-Z][A-Z0-9_]{2,}\}?' "$SKILL_FILE" 2>/dev/null | \
+            sed 's/[${}]//g' | \
+            grep -E '_(API_KEY|KEY|TOKEN|SECRET|WEBHOOK_URL)$' | \
+            grep -vE '^(GITHUB_TOKEN|GH_TOKEN|ANTHROPIC_API_KEY|CLAUDE_CODE_OAUTH_TOKEN|TELEGRAM_|DISCORD_|SLACK_)' | \
+            sort -u) || true
+
+          [ -z "$SECRETS" ] && exit 0
+
+          MISSING=() OPTIONAL=()
+          while IFS= read -r secret; do
+            [ -z "$secret" ] && continue
+            if [ -z "${!secret:-}" ]; then
+              if grep -qiE "(if.*${secret}.*is (not )?set|${secret}.*(optional|falls? back)|without)" "$SKILL_FILE" 2>/dev/null; then
+                OPTIONAL+=("$secret")
+              else
+                MISSING+=("$secret")
+              fi
+            fi
+          done <<< "$SECRETS"
+
+          [ ${#OPTIONAL[@]} -gt 0 ] && echo "::notice::Optional secrets not set: ${OPTIONAL[*]} (skill will use fallbacks)"
+          [ ${#MISSING[@]} -gt 0 ] && echo "::warning::Secrets not set: ${MISSING[*]} — skill may fail or produce incomplete results"
+
       - name: Run
         id: run
         if: steps.work.outputs.mode != ''
@@ -202,6 +176,7 @@ jobs:
             MODEL="${CONFIG_MODEL:-claude-opus-4-6}"
           fi
           echo "Using model: $MODEL"
+          echo "SKILL_MODEL=$MODEL" >> "$GITHUB_OUTPUT"
           # Generate notify script in workspace (Claude calls: ./notify "message")
           cat > ./notify << 'NOTIFY_SCRIPT'
           #!/usr/bin/env bash
@@ -307,6 +282,16 @@ jobs:
           echo "| Cache creation | $CACHE_CREATION |" >> "$GITHUB_STEP_SUMMARY"
           echo "| **Total** | **$TOTAL** |" >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Track token costs
+        if: steps.work.outputs.mode != '' && steps.run.outcome == 'success'
+        run: |
+          CSV="memory/token-usage.csv"
+          mkdir -p memory
+          if [ ! -f "$CSV" ]; then
+            echo "date,skill,model,input_tokens,output_tokens,cache_read,cache_creation" > "$CSV"
+          fi
+          echo "$(date -u +%Y-%m-%d),${{ steps.skill.outputs.name }},${{ steps.run.outputs.SKILL_MODEL }},${{ steps.run.outputs.SKILL_INPUT_TOKENS }},${{ steps.run.outputs.SKILL_OUTPUT_TOKENS }},${{ steps.run.outputs.SKILL_CACHE_READ_TOKENS }},${{ steps.run.outputs.SKILL_CACHE_CREATION_TOKENS }}" >> "$CSV"
+
       - name: Convert feed outputs
         if: steps.work.outputs.mode != '' && vars.JSONRENDER_ENABLED != 'false'
         env:
@@ -355,7 +340,7 @@ jobs:
           else
             git commit -m "chore($LABEL): auto-commit $(date +%Y-%m-%d)"
           fi
-          for i in 1 2 3; do
+          for i in 1 2 3 4 5; do
             # Pull and rebase onto latest remote
             if ! git pull --rebase origin main 2>/dev/null; then
               echo "Rebase conflict on attempt $i, auto-resolving..."
@@ -386,5 +371,71 @@ jobs:
             echo "Push attempt $i failed (ref moved), retrying in ${i}s..."
             sleep "$i"
           done
-          echo "Failed to push after 3 attempts"
+          echo "Failed to push after 5 attempts"
           exit 1
+
+      - name: Update cron state
+        if: always() && steps.skill.outputs.name != ''
+        run: |
+          SKILL="${{ steps.skill.outputs.name }}"
+          RUN_OUTCOME="${{ steps.run.outcome }}"
+          NOW_ISO=$(date -u +%FT%TZ)
+          STATE_FILE="memory/cron-state.json"
+
+          # Determine status from step outcome
+          if [ "$RUN_OUTCOME" = "success" ]; then
+            CRON_STATUS="success"
+          else
+            CRON_STATUS="failed"
+          fi
+
+          # Ensure we're on main with latest
+          git checkout main 2>/dev/null || true
+          git pull --rebase origin main 2>/dev/null || true
+
+          # Read current state
+          if [ -f "$STATE_FILE" ] && jq empty "$STATE_FILE" 2>/dev/null; then
+            STATE=$(cat "$STATE_FILE")
+          else
+            STATE='{}'
+          fi
+
+          # Update this skill's entry
+          STATE=$(echo "$STATE" | jq --arg s "$SKILL" --arg st "$CRON_STATUS" --arg ts "$NOW_ISO" \
+            '.[$s].last_status = $st | .[$s]["last_" + $st] = $ts')
+
+          mkdir -p memory
+          echo "$STATE" | jq '.' > "$STATE_FILE"
+
+          git add "$STATE_FILE"
+          if git diff --staged --quiet; then
+            echo "No state changes"
+            exit 0
+          fi
+
+          git commit -m "chore(cron): $SKILL $CRON_STATUS"
+          for i in 1 2 3 4 5; do
+            if git pull --rebase origin main 2>/dev/null && git push -u origin HEAD 2>/dev/null; then
+              echo "Cron state updated: $SKILL=$CRON_STATUS"
+              exit 0
+            fi
+            # On conflict, take theirs and re-apply our update
+            git rebase --abort 2>/dev/null || true
+            git reset --soft HEAD~1 2>/dev/null || true
+            git checkout -- "$STATE_FILE" 2>/dev/null || true
+            git pull origin main 2>/dev/null || true
+
+            if [ -f "$STATE_FILE" ] && jq empty "$STATE_FILE" 2>/dev/null; then
+              STATE=$(cat "$STATE_FILE")
+            else
+              STATE='{}'
+            fi
+            STATE=$(echo "$STATE" | jq --arg s "$SKILL" --arg st "$CRON_STATUS" --arg ts "$NOW_ISO" \
+              '.[$s].last_status = $st | .[$s]["last_" + $st] = $ts')
+            echo "$STATE" | jq '.' > "$STATE_FILE"
+            git add "$STATE_FILE"
+            git diff --staged --quiet && { echo "State already up to date"; exit 0; }
+            git commit -m "chore(cron): $SKILL $CRON_STATUS"
+            sleep "$i"
+          done
+          echo "::warning::Failed to commit cron state (non-fatal)"

@@ -2,6 +2,7 @@
 name: Technical Explainer
 description: Generate a visual technical explanation of a recent topic using Replicate for the hero image
 var: ""
+tags: [content]
 ---
 > **${var}** — Topic to explain (e.g. "free-market algorithm", "entropy trajectory reasoning", "reflexivity in prediction markets"). If empty, auto-selects from recent articles and conversations.
 

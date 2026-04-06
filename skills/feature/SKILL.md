@@ -2,6 +2,7 @@
 name: Feature Builder
 description: Build new features from GitHub issues or improve the agent
 var: ""
+tags: [dev]
 ---
 > **${var}** — Feature to build. If empty, picks from GitHub issues or memory.
 

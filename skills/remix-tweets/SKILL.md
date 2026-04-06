@@ -2,6 +2,7 @@
 name: Remix Tweets
 description: Fetch 10 random past tweets from your account and craft 10 new rephrased versions in your voice
 var: ""
+tags: [social]
 ---
 > **${var}** — Override time window (e.g. "180d", "1y"). Defaults to 30-180 days ago. Can also be a specific date range like "2025-06-01:2025-09-01".
 

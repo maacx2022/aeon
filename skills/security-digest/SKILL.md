@@ -2,6 +2,7 @@
 name: Security Digest
 description: Monitor recent security advisories from the GitHub Advisory Database for tracked ecosystems
 var: ""
+tags: [news, dev]
 ---
 > **${var}** — Ecosystem to focus on (npm, pip, Go). If empty, checks all.
 

@@ -2,6 +2,8 @@
 name: Daily Routine
 description: Morning briefing combining token movers, tweet roundup, paper pick, GitHub issues, and HN digest
 var: ""
+depends_on: [token-movers, paper-pick, github-issues, hn-digest]
+tags: [news]
 ---
 > **${var}** — Area to emphasize (e.g. "crypto", "AI", "security"). If empty, covers all areas equally.
 

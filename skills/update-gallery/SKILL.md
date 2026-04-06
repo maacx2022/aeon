@@ -2,6 +2,7 @@
 name: Update Gallery
 description: Sync articles to the GitHub Pages gallery with proper Jekyll frontmatter
 var: ""
+tags: [content]
 ---
 > **${var}** — Optional single article filename to sync (e.g. `article-2026-04-01.md`). If empty, syncs all articles.
 

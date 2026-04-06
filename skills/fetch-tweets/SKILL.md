@@ -2,6 +2,7 @@
 name: Fetch Tweets
 description: Search X/Twitter for tweets by keyword, username, or both
 var: ""
+tags: [social]
 ---
 > **${var}** — Search query for X/Twitter — keyword, @user, or #hashtag. **Required** — set your query in aeon.yml.
 

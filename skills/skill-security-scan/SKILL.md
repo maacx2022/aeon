@@ -2,6 +2,7 @@
 name: Skill Security Scan
 description: Audit imported skills for shell injection, secret exfiltration, path traversal, and prompt injection before they run
 var: ""
+tags: [dev]
 ---
 > **${var}** — Path to a SKILL.md file or skill directory to scan. If empty, scans all skills in `skills/`.
 

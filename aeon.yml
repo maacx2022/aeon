@@ -9,7 +9,6 @@ skills:
   morning-brief: { enabled: false, schedule: "0 7 * * *" }
   daily-routine: { enabled: false, schedule: "0 7 * * *" }
   rss-digest: { enabled: false, schedule: "0 7 * * *" }
-  hacker-news-digest: { enabled: false, schedule: "0 7 * * *" }
   hn-digest: { enabled: false, schedule: "0 7 * * *" }
   paper-digest: { enabled: false, schedule: "0 7 * * *" }
   tweet-digest: { enabled: false, schedule: "0 7 * * *" }
@@ -31,19 +30,17 @@ skills:
   defi-monitor: { enabled: false, schedule: "0 12 * * *" }
   defi-overview: { enabled: false, schedule: "0 12 * * *" }
   polymarket: { enabled: false, schedule: "0 12 * * *" }
-  polymarket-comments: { enabled: false, schedule: "0 12 * * *" }
-  monitor-polymarket: { enabled: false, schedule: "30 12 * * *", model: "claude-sonnet-4-6" }  # monitor specific markets for 24h price moves and volume changes
+  monitor-polymarket: { enabled: false, schedule: "30 12 * * *", model: "claude-sonnet-4-6" } # monitor specific markets for 24h price moves and volume changes
   monitor-runners: { enabled: false, schedule: "0 12 * * *" }
   token-pick: { enabled: false, schedule: "0 12 * * *" }
 
   # --- Afternoon (2 PM UTC) ---
   article: { enabled: false, schedule: "0 14 * * *" }
-  technical-explainer: { enabled: false, schedule: "30 14 * * *" }  # visual technical explanation with AI-generated hero image
+  technical-explainer: { enabled: false, schedule: "30 14 * * *" } # visual technical explanation with AI-generated hero image
   digest: { enabled: false, schedule: "0 14 * * *" }
   research-brief: { enabled: false, schedule: "0 14 * * *" }
-  deep-research: { enabled: false, schedule: "workflow_dispatch", var: "" }  # on-demand only — set var to research topic
+  deep-research: { enabled: false, schedule: "workflow_dispatch", var: "" } # on-demand only — set var to research topic
   paper-pick: { enabled: false, schedule: "0 14 * * *" }
-  search-papers: { enabled: false, schedule: "0 14 * * *" }
   search-skill: { enabled: false, schedule: "0 14 * * *" }
   security-digest: { enabled: false, schedule: "0 14 * * *" }
   idea-capture: { enabled: false, schedule: "0 14 * * *" }
@@ -67,7 +64,7 @@ skills:
   list-digest: { enabled: false, schedule: "0 17 * * *" }
   write-tweet: { enabled: false, schedule: "0 17 * * *" }
   reply-maker: { enabled: false, schedule: "0 17 * * *" }
-  remix-tweets: { enabled: false, schedule: "30 17 * * *" }  # 10 rephrased versions of random past tweets
+  remix-tweets: { enabled: false, schedule: "30 17 * * *" } # 10 rephrased versions of random past tweets
 
   # --- Feed generation (5:30 PM UTC, after content skills) ---
   rss-feed: { enabled: false, schedule: "30 17 * * *" }
@@ -88,7 +85,7 @@ skills:
   weekly-review: { enabled: false, schedule: "0 19 * * 1" }
 
   # --- Fallback (must be last) ---
-  heartbeat: { enabled: true, schedule: "0 12 * * *" }
+  heartbeat: { enabled: true, schedule: "0 8,14,20 * * *" }
 
 # Default model for all skills. Override per-run via workflow_dispatch.
 # Options: claude-opus-4-6, claude-sonnet-4-6, claude-haiku-4-5-20251001
@@ -97,7 +94,7 @@ model: claude-opus-4-6
 # Output channels
 channels:
   jsonrender:
-    enabled: true  # Set to true (or JSONRENDER_ENABLED=true as repo var) to write json-render specs
+    enabled: true # Set to true (or JSONRENDER_ENABLED=true as repo var) to write json-render specs
 
 # Messaging integration
 # Polls for messages every 5 minutes on Telegram/Discord/Slack.

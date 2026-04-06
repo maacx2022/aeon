@@ -2,6 +2,7 @@
 name: Deep Research
 description: Exhaustive multi-source synthesis on any topic using full-context ingestion — far beyond a digest
 var: ""
+tags: [research]
 ---
 > **${var}** — Research question or topic. Use `--depth=shallow` for a quick 5-source pass, `--depth=deep` (default) for a 30-50 source comprehensive report.
 

@@ -2,6 +2,7 @@
 name: Weekly Reflect
 description: Review recent activity, consolidate memory, and prune stale entries
 var: ""
+tags: [meta]
 ---
 > **${var}** — Area to focus on. If empty, reviews everything.
 
