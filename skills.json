@@ -2,7 +2,7 @@
   "version": "1.0",
   "generated": "2026-04-04T00:00:00Z",
   "repo": "aaronjmars/aeon",
-  "total": 53,
+  "total": 54,
   "categories": {
     "research": "Research & Content",
     "dev": "Dev & Code",
@@ -530,6 +530,16 @@
       "var": "",
       "files": 1,
       "install": "./add-skill aaronjmars/aeon update-gallery"
+    },
+    {
+      "slug": "distribute-tokens",
+      "name": "Distribute Tokens",
+      "description": "Send tokens to contributors via Bankr Agent API — supports Twitter handles and EVM addresses",
+      "category": "crypto",
+      "schedule": "on-demand",
+      "var": "",
+      "files": 0,
+      "install": "./add-skill aaronjmars/aeon distribute-tokens"
     },
     {
       "slug": "fork-fleet",
