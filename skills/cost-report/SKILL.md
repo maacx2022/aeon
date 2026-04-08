@@ -11,7 +11,9 @@ Today is ${today}. Generate a cost report from Aeon's token usage data.
 
 ## Model Pricing (per million tokens)
 
-Use these rates to calculate costs:
+Use these rates to calculate costs. First check `aeon.yml` for the `gateway.provider` value.
+
+### Direct Anthropic (gateway.provider: direct)
 
 | Model | Input | Output | Cache Read | Cache Write |
 |-------|-------|--------|------------|-------------|
@@ -19,7 +21,22 @@ Use these rates to calculate costs:
 | claude-sonnet-4-6 | $3.00 | $15.00 | $0.30 | $3.75 |
 | claude-haiku-4-5-20251001 | $0.80 | $4.00 | $0.08 | $3.75 |
 
-For any model not in this table, default to Opus pricing (conservative estimate).
+### Bankr Gateway (gateway.provider: bankr)
+
+| Model | Input | Output |
+|-------|-------|--------|
+| claude-opus-4-6 | $5.00 | $25.00 |
+| claude-sonnet-4-6 | $3.00 | $15.00 |
+| claude-haiku-4-5-20251001 | $0.80 | $4.00 |
+| gemini-3-pro | $1.25 | $10.00 |
+| gemini-3-flash | $0.15 | $0.60 |
+| gpt-5.2 | $2.50 | $10.00 |
+| kimi-k2.5 | $1.00 | $4.00 |
+| qwen3-coder | $0.50 | $2.00 |
+
+Note: Bankr does not break out cache read/write pricing separately. Treat cache columns as zero cost for Bankr rows.
+
+For any model not in these tables, default to Opus pricing (conservative estimate).
 
 ## Steps
 

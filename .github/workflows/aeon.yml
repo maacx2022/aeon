@@ -18,6 +18,11 @@ on:
           - claude-opus-4-6
           - claude-sonnet-4-6
           - claude-haiku-4-5-20251001
+          - gemini-3-pro
+          - gemini-3-flash
+          - gpt-5.2
+          - kimi-k2.5
+          - qwen3-coder
       var:
         description: 'Variable (e.g. AI, bitcoin, owner/repo)'
         required: false
@@ -119,7 +124,7 @@ jobs:
           SECRETS=$(grep -oE '\$\{?[A-Z][A-Z0-9_]{2,}\}?' "$SKILL_FILE" 2>/dev/null | \
             sed 's/[${}]//g' | \
             grep -E '_(API_KEY|KEY|TOKEN|SECRET|WEBHOOK_URL)$' | \
-            grep -vE '^(GITHUB_TOKEN|GH_TOKEN|ANTHROPIC_API_KEY|CLAUDE_CODE_OAUTH_TOKEN|TELEGRAM_|DISCORD_|SLACK_)' | \
+            grep -vE '^(GITHUB_TOKEN|GH_TOKEN|ANTHROPIC_API_KEY|CLAUDE_CODE_OAUTH_TOKEN|BANKR_LLM_KEY|TELEGRAM_|DISCORD_|SLACK_)' | \
             sort -u) || true
 
           [ -z "$SECRETS" ] && exit 0
@@ -146,6 +151,7 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          BANKR_LLM_KEY: ${{ secrets.BANKR_LLM_KEY }}
           GITHUB_TOKEN: ${{ secrets.GH_GLOBAL || secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ secrets.GH_GLOBAL || secrets.GITHUB_TOKEN }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -178,6 +184,28 @@ jobs:
           fi
           echo "Using model: $MODEL"
           echo "SKILL_MODEL=$MODEL" >> "$GITHUB_OUTPUT"
+
+          # --- AI Gateway routing ---
+          GATEWAY=$(grep -A1 '^gateway:' aeon.yml | grep 'provider:' | sed 's/.*provider: *//' | tr -d ' "'"'" || echo "direct")
+          GATEWAY="${GATEWAY:-direct}"
+          echo "Gateway: $GATEWAY"
+
+          echo "GATEWAY=$GATEWAY" >> "$GITHUB_OUTPUT"
+
+          if [ "$GATEWAY" = "bankr" ]; then
+            if [ -z "${BANKR_LLM_KEY:-}" ]; then
+              echo "::error::gateway.provider=bankr but BANKR_LLM_KEY secret is not set"
+              exit 1
+            fi
+            export ANTHROPIC_BASE_URL="https://llm.bankr.bot"
+            export ANTHROPIC_AUTH_TOKEN="$BANKR_LLM_KEY"
+            unset ANTHROPIC_API_KEY
+            unset CLAUDE_CODE_OAUTH_TOKEN
+            echo "::notice::Routing through Bankr Gateway (https://llm.bankr.bot)"
+          else
+            echo "::notice::Using direct Anthropic API"
+          fi
+
           # Generate notify script in workspace (Claude calls: ./notify "message")
           cat > ./notify << 'NOTIFY_SCRIPT'
           #!/usr/bin/env bash
@@ -298,7 +326,14 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          BANKR_LLM_KEY: ${{ secrets.BANKR_LLM_KEY }}
         run: |
+          if [ "${{ steps.run.outputs.GATEWAY }}" = "bankr" ] && [ -n "${BANKR_LLM_KEY:-}" ]; then
+            export ANTHROPIC_BASE_URL="https://llm.bankr.bot"
+            export ANTHROPIC_AUTH_TOKEN="$BANKR_LLM_KEY"
+            unset ANTHROPIC_API_KEY
+            unset CLAUDE_CODE_OAUTH_TOKEN
+          fi
           for pending in dashboard/outputs/.pending-*.md; do
             [ -f "$pending" ] || continue
             SKILL=$(basename "$pending" .md | sed 's/^\.pending-//')

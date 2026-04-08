@@ -7,9 +7,14 @@ export interface SkillConfig {
   model: string
 }
 
+export interface GatewayConfig {
+  provider: 'direct' | 'bankr'
+}
+
 export interface AeonConfig {
   skills: Record<string, SkillConfig>
   model: string
+  gateway: GatewayConfig
   jsonrenderEnabled: boolean
 }
 
@@ -39,6 +44,13 @@ export function parseConfig(raw: string): AeonConfig {
 
   const model = String(doc.get('model') ?? 'claude-sonnet-4-6')
 
+  let gateway: GatewayConfig = { provider: 'direct' }
+  const gatewayNode = doc.get('gateway')
+  if (isMap(gatewayNode)) {
+    const provider = String(getMapValue(gatewayNode, 'provider') ?? 'direct')
+    gateway = { provider: provider === 'bankr' ? 'bankr' : 'direct' }
+  }
+
   let jsonrenderEnabled = false
   const channels = doc.get('channels')
   if (isMap(channels)) {
@@ -48,7 +60,7 @@ export function parseConfig(raw: string): AeonConfig {
     }
   }
 
-  return { skills, model, jsonrenderEnabled }
+  return { skills, model, gateway, jsonrenderEnabled }
 }
 
 /**
