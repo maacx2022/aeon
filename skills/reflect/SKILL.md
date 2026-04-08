@@ -20,6 +20,7 @@ Steps:
    - What features were built? Record key decisions and outcomes.
    - Are there any stale entries in MEMORY.md that are no longer relevant? Remove them.
    - Are there recurring errors or issues worth noting for future runs?
+   - Check `memory/skill-health/*.json` for quality trends — note any skills with declining scores or persistent flags. Summarize overall skill health in the appropriate topic file.
 5. Reorganize memory:
    - Keep MEMORY.md as a short index (~50 lines): goals, active topics, and pointers to topic files.
    - Move detailed notes into `memory/topics/` files (e.g. `crypto.md`, `research.md`, `projects.md`).

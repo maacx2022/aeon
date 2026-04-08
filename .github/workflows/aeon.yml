@@ -298,6 +298,8 @@ jobs:
             --model "$MODEL" --allowedTools "$ALLOWED" \
             --output-format json 2>&1); then
             echo "::error::Claude CLI failed. Output: $CLAUDE_OUTPUT"
+            # Save error signature for quality tracking (cron-state step reads this)
+            echo "$CLAUDE_OUTPUT" | tail -c 500 | tr '\n' ' ' | cut -c1-200 > /tmp/skill-error.txt
             exit 1
           fi
 
@@ -366,6 +368,108 @@ jobs:
           fi
           echo "::notice::Skill output captured to .outputs/${SKILL}.md ($(wc -c < ".outputs/${SKILL}.md") bytes)"
 
+      - name: Analyze skill output
+        id: analyze
+        if: steps.work.outputs.mode != '' && steps.run.outcome == 'success'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          BANKR_LLM_KEY: ${{ secrets.BANKR_LLM_KEY }}
+        run: |
+          SKILL="${{ steps.skill.outputs.name }}"
+
+          # Skip analysis for meta skills (they don't produce scorable output)
+          case "$SKILL" in heartbeat|skill-health|reflect|memory-flush|self-review|cost-report) echo "Skipping analysis for meta skill"; exit 0;; esac
+
+          # Route through gateway if configured
+          if [ "${{ steps.run.outputs.GATEWAY }}" = "bankr" ] && [ -n "${BANKR_LLM_KEY:-}" ]; then
+            export ANTHROPIC_BASE_URL="https://llm.bankr.bot"
+            export ANTHROPIC_AUTH_TOKEN="$BANKR_LLM_KEY"
+            unset ANTHROPIC_API_KEY
+            unset CLAUDE_CODE_OAUTH_TOKEN
+          fi
+
+          # Read and truncate skill output for analysis
+          OUTPUT=""
+          if [ -f /tmp/skill-result.txt ] && [ -s /tmp/skill-result.txt ]; then
+            OUTPUT=$(head -c 3000 /tmp/skill-result.txt)
+          fi
+          [ -z "$OUTPUT" ] && { echo "No output to analyze"; exit 0; }
+
+          ANALYSIS_PROMPT="Score this autonomous agent skill output on a 1-5 scale. Respond with ONLY valid JSON.
+
+          Scoring:
+          1 = Failed/empty/error output
+          2 = Ran but low quality, generic, or boilerplate
+          3 = Acceptable — completed the task adequately
+          4 = Good — substantive, well-structured, useful
+          5 = Excellent — insightful, well-sourced, actionable
+
+          Flag any issues from: api_error, empty_output, low_quality, stale_data, generic_content, rate_limited
+
+          Skill: $SKILL
+          Output (truncated):
+          $OUTPUT
+
+          JSON format: {\"score\": N, \"assessment\": \"one line\", \"flags\": []}"
+
+          if ! RAW=$(echo "$ANALYSIS_PROMPT" | claude -p - \
+            --model claude-haiku-4-5-20251001 --output-format json 2>&1); then
+            echo "::warning::Skill analysis failed (non-fatal)"
+            exit 0
+          fi
+
+          ANALYSIS_TEXT=$(echo "$RAW" | jq -r '.result // empty')
+          [ -z "$ANALYSIS_TEXT" ] && { echo "::warning::Empty analysis result"; exit 0; }
+
+          # Parse score from response (try direct JSON, then extract embedded JSON)
+          if echo "$ANALYSIS_TEXT" | jq empty 2>/dev/null; then
+            PARSED="$ANALYSIS_TEXT"
+          else
+            PARSED=$(echo "$ANALYSIS_TEXT" | grep -o '{[^{}]*}' | head -1 || true)
+            if [ -z "$PARSED" ] || ! echo "$PARSED" | jq empty 2>/dev/null; then
+              echo "::warning::Could not parse analysis JSON"
+              exit 0
+            fi
+          fi
+
+          SCORE=$(echo "$PARSED" | jq -r '.score // 0')
+          ASSESSMENT=$(echo "$PARSED" | jq -r '.assessment // "analysis incomplete"')
+          FLAGS=$(echo "$PARSED" | jq -c '.flags // []')
+
+          # Validate score range
+          if [ "$SCORE" -lt 1 ] || [ "$SCORE" -gt 5 ] 2>/dev/null; then
+            SCORE=0
+          fi
+
+          echo "QUALITY_SCORE=$SCORE" >> "$GITHUB_OUTPUT"
+
+          # Write skill health file with rolling history
+          mkdir -p memory/skill-health
+          HEALTH_FILE="memory/skill-health/${SKILL}.json"
+          NOW_ISO=$(date -u +%FT%TZ)
+          TODAY=$(date -u +%Y-%m-%d)
+
+          if [ -f "$HEALTH_FILE" ] && jq empty "$HEALTH_FILE" 2>/dev/null; then
+            HISTORY=$(jq -c '.history // []' "$HEALTH_FILE")
+          else
+            HISTORY='[]'
+          fi
+
+          # Append to history (keep last 30 entries)
+          HISTORY=$(echo "$HISTORY" | jq -c --arg d "$TODAY" --argjson s "$SCORE" \
+            '. + [{"date": $d, "score": $s}] | .[-30:]')
+
+          AVG=$(echo "$HISTORY" | jq '([.[].score] | add / length * 100 | round) / 100')
+
+          jq -n --arg sk "$SKILL" --arg ts "$NOW_ISO" --argjson sc "$SCORE" \
+            --arg as "$ASSESSMENT" --argjson fl "$FLAGS" \
+            --argjson hi "$HISTORY" --argjson avg "$AVG" \
+            '{skill: $sk, last_analyzed: $ts, quality_score: $sc, assessment: $as, flags: $fl, avg_score: $avg, history: $hi}' \
+            > "$HEALTH_FILE"
+
+          echo "::notice::Skill quality — $SKILL: score=$SCORE, avg=$AVG — $ASSESSMENT"
+
       - name: Convert feed outputs
         if: steps.work.outputs.mode != '' && vars.JSONRENDER_ENABLED != 'false'
         env:
@@ -429,7 +533,7 @@ jobs:
                 CONFLICTED=$(git diff --name-only --diff-filter=U) || true
                 [ -z "$CONFLICTED" ] && break
                 for f in $CONFLICTED; do
-                  if [[ "$f" == memory/logs/* ]] || [[ "$f" == memory/topics/* ]] || [[ "$f" == memory/MEMORY.md ]] || [[ "$f" == dashboard/outputs/* ]] || [[ "$f" == .outputs/* ]]; then
+                  if [[ "$f" == memory/logs/* ]] || [[ "$f" == memory/topics/* ]] || [[ "$f" == memory/MEMORY.md ]] || [[ "$f" == memory/skill-health/* ]] || [[ "$f" == dashboard/outputs/* ]] || [[ "$f" == .outputs/* ]]; then
                     sed -i '/^<<<<<<< /d; /^=======/d; /^>>>>>>> /d' "$f"
                     git add "$f"
                   else
@@ -462,6 +566,7 @@ jobs:
           RUN_OUTCOME="${{ steps.run.outcome }}"
           NOW_ISO=$(date -u +%FT%TZ)
           STATE_FILE="memory/cron-state.json"
+          QUALITY_SCORE="${{ steps.analyze.outputs.QUALITY_SCORE }}"
 
           # Determine status from step outcome
           if [ "$RUN_OUTCOME" = "success" ]; then
@@ -469,6 +574,60 @@ jobs:
           else
             CRON_STATUS="failed"
           fi
+
+          # Read error signature if the skill failed
+          ERROR_SIG=""
+          if [ "$CRON_STATUS" = "failed" ] && [ -f /tmp/skill-error.txt ]; then
+            ERROR_SIG=$(cat /tmp/skill-error.txt)
+          fi
+
+          # Function: apply quality metrics update to STATE
+          apply_state_update() {
+            # Core status update
+            STATE=$(echo "$STATE" | jq --arg s "$SKILL" --arg st "$CRON_STATUS" --arg ts "$NOW_ISO" \
+              '.[$s].last_status = $st | .[$s]["last_" + $st] = $ts')
+
+            # Read current counters from state
+            PREV_RUNS=$(echo "$STATE" | jq --arg s "$SKILL" '.[$s].total_runs // 0')
+            PREV_SUCC=$(echo "$STATE" | jq --arg s "$SKILL" '.[$s].total_successes // 0')
+            PREV_FAIL=$(echo "$STATE" | jq --arg s "$SKILL" '.[$s].total_failures // 0')
+
+            NEW_RUNS=$((PREV_RUNS + 1))
+            if [ "$CRON_STATUS" = "success" ]; then
+              NEW_SUCC=$((PREV_SUCC + 1))
+              NEW_FAIL=$PREV_FAIL
+              NEW_CONSEC=0
+            else
+              NEW_SUCC=$PREV_SUCC
+              NEW_FAIL=$((PREV_FAIL + 1))
+              PREV_CONSEC=$(echo "$STATE" | jq --arg s "$SKILL" '.[$s].consecutive_failures // 0')
+              NEW_CONSEC=$((PREV_CONSEC + 1))
+            fi
+
+            RATE=$(jq -n "if $NEW_RUNS > 0 then ($NEW_SUCC / $NEW_RUNS * 100 | round) / 100 else 0 end")
+
+            STATE=$(echo "$STATE" | jq --arg s "$SKILL" \
+              --argjson runs "$NEW_RUNS" --argjson succ "$NEW_SUCC" --argjson fail "$NEW_FAIL" \
+              --argjson consec "$NEW_CONSEC" --argjson rate "$RATE" '
+              .[$s].total_runs = $runs |
+              .[$s].total_successes = $succ |
+              .[$s].total_failures = $fail |
+              .[$s].consecutive_failures = $consec |
+              .[$s].success_rate = $rate
+            ')
+
+            # Record error signature on failure
+            if [ "$CRON_STATUS" = "failed" ] && [ -n "$ERROR_SIG" ]; then
+              STATE=$(echo "$STATE" | jq --arg s "$SKILL" --arg err "$ERROR_SIG" \
+                '.[$s].last_error = $err')
+            fi
+
+            # Record quality score on success (from analysis step)
+            if [ -n "$QUALITY_SCORE" ] && [ "$QUALITY_SCORE" != "0" ]; then
+              STATE=$(echo "$STATE" | jq --arg s "$SKILL" --argjson q "$QUALITY_SCORE" \
+                '.[$s].last_quality_score = $q')
+            fi
+          }
 
           # Ensure we're on main with latest
           git checkout main 2>/dev/null || true
@@ -481,9 +640,7 @@ jobs:
             STATE='{}'
           fi
 
-          # Update this skill's entry
-          STATE=$(echo "$STATE" | jq --arg s "$SKILL" --arg st "$CRON_STATUS" --arg ts "$NOW_ISO" \
-            '.[$s].last_status = $st | .[$s]["last_" + $st] = $ts')
+          apply_state_update
 
           mkdir -p memory
           echo "$STATE" | jq '.' > "$STATE_FILE"
@@ -511,8 +668,7 @@ jobs:
             else
               STATE='{}'
             fi
-            STATE=$(echo "$STATE" | jq --arg s "$SKILL" --arg st "$CRON_STATUS" --arg ts "$NOW_ISO" \
-              '.[$s].last_status = $st | .[$s]["last_" + $st] = $ts')
+            apply_state_update
             echo "$STATE" | jq '.' > "$STATE_FILE"
             git add "$STATE_FILE"
             git diff --staged --quiet && { echo "State already up to date"; exit 0; }

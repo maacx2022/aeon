@@ -14,14 +14,21 @@ Read memory/MEMORY.md and the last 2 days of memory/logs/ for context.
 
 ### P0 — Failed & stuck skills (check first)
 
-Read `memory/cron-state.json`. This file tracks every scheduled skill's state:
+Read `memory/cron-state.json`. This file tracks every scheduled skill's state and quality metrics:
 ```json
 {
   "skill-name": {
     "last_dispatch": "2026-04-06T12:00:00Z",
     "last_status": "dispatched|success|failed",
     "last_success": "2026-04-06T12:05:00Z",
-    "last_failed": "2026-04-05T12:03:00Z"
+    "last_failed": "2026-04-05T12:03:00Z",
+    "total_runs": 10,
+    "total_successes": 8,
+    "total_failures": 2,
+    "consecutive_failures": 0,
+    "success_rate": 0.80,
+    "last_quality_score": 4,
+    "last_error": "error signature text"
   }
 }
 ```
@@ -29,6 +36,8 @@ Read `memory/cron-state.json`. This file tracks every scheduled skill's state:
 Flag these conditions:
 - **Failed skills**: any entry with `last_status: "failed"`. Report the skill name and when it failed.
 - **Stuck skills**: any entry with `last_status: "dispatched"` where `last_dispatch` is **>45 minutes ago**. The skill was dispatched but never reported back — likely hung or crashed before the state update step ran.
+- **API degradation**: any skill with `consecutive_failures >= 3`. This likely indicates an external API is down or rate-limiting. Report the skill, failure count, and `last_error`. If multiple skills share similar error signatures, flag the shared dependency.
+- **Chronic failures**: any skill with `success_rate < 0.5` (and `total_runs >= 5`). The skill is failing more than it succeeds.
 - **Self-check**: if heartbeat's own entry shows `last_success` is **>36 hours ago** (or missing), note that heartbeat itself may be unreliable.
 
 ### P1 — Stalled PRs & urgent issues

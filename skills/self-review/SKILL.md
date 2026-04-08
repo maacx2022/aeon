@@ -14,12 +14,15 @@ Read ALL memory/logs/ entries from the last 7 days.
 
 Steps:
 1. Audit quality of outputs:
+   - Read `memory/skill-health/*.json` for quality scores and trends. Flag any skills with avg_score < 3 or declining trends (score dropping over last 10 runs).
    - Read recent articles in articles/ — are they substantive or formulaic?
    - Check recent notifications in logs — were they useful or noisy?
    - Review any PR comments posted — were they actionable?
 2. Audit reliability:
-   - How many skills ran vs expected?
-   - Any repeated errors or patterns of failure?
+   - Read `memory/cron-state.json` for hard metrics: success_rate, total_runs, consecutive_failures per skill.
+   - How many skills ran vs expected? Use total_runs and success_rate.
+   - Any repeated errors or patterns of failure? Check last_error fields for recurring signatures.
+   - Any skills with consecutive_failures >= 3? Likely API degradation — recommend investigation or disabling.
    - Are monitors catching real issues or always returning OK?
 3. Audit memory hygiene:
    - Is MEMORY.md current and under 50 lines?
