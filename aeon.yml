@@ -81,6 +81,9 @@ skills:
   action-converter: { enabled: false, schedule: "0 18 * * *" }
   startup-idea: { enabled: false, schedule: "0 18 * * *" }
 
+  # --- Cost tracking (Monday 7 AM UTC, weekly) ---
+  cost-report: { enabled: false, schedule: "0 7 * * 1", model: "claude-sonnet-4-6" } # weekly API cost breakdown by skill and model
+
   # --- Weekly (Monday only) ---
   weekly-review: { enabled: false, schedule: "0 19 * * 1" }
 
