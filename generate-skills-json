@@ -57,6 +57,7 @@ declare -A CATEGORIES=(
   [on-chain-monitor]="crypto"
   [defi-monitor]="crypto"
   [defi-overview]="crypto"
+  [treasury-info]="crypto"
   [polymarket]="crypto"
   [polymarket-comments]="crypto"
   [monitor-runners]="crypto"

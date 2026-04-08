@@ -28,6 +28,7 @@ skills:
   wallet-digest: { enabled: false, schedule: "0 12 * * *" }
   on-chain-monitor: { enabled: false, schedule: "0 12 * * *" }
   defi-monitor: { enabled: false, schedule: "0 12 * * *" }
+  treasury-info: { enabled: false, schedule: "0 12 * * *" }
   defi-overview: { enabled: false, schedule: "0 12 * * *" }
   polymarket: { enabled: false, schedule: "0 12 * * *" }
   monitor-polymarket: { enabled: false, schedule: "30 12 * * *", model: "claude-sonnet-4-6" } # monitor specific markets for 24h price moves and volume changes
