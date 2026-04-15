@@ -6,11 +6,11 @@
 
 <p align="center">
   <strong>The most autonomous agent framework.</strong><br>
-  91 skills on GitHub Actions — research, dev, crypto, writing — running unattended on a cron. No approval loops, no babysitting, no servers. Configure once, forget forever.
+  Give it a direction — it'll research, build, deploy to Vercel and GitHub, and send you what it finds. No approval loops. No babysitting. Configure once, forget forever.
 </p>
 
 <p align="center">
-  <img src="assets/aeon.gif" alt="Aeon Demo" />
+  <img src="assets/aeonframework.gif" alt="Aeon Demo" />
 </p>
 
 ---
