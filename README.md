@@ -225,6 +225,70 @@ Skills that need API keys (CoinGecko, Alchemy, etc.) read from the same environm
 
 ---
 
+## Use with any AI agent (A2A)
+
+Aeon implements [Google's Agent-to-Agent (A2A) protocol](https://google.github.io/A2A/), making all skills accessible to any A2A-compliant agent framework — LangChain, AutoGen, CrewAI, OpenAI Agents SDK, Vertex AI — without needing Claude or MCP.
+
+```bash
+./add-a2a
+```
+
+The gateway starts an HTTP server (default port `41241`) that advertises all Aeon skills via the A2A agent card endpoint and accepts task invocations via JSON-RPC.
+
+**Discovery endpoint** — fetch this to see all available skills:
+
+```
+GET http://localhost:41241/.well-known/agent.json
+```
+
+**Invoke a skill** (Python example with any A2A-compatible HTTP client):
+
+```python
+import requests, uuid
+
+# Send task
+task = requests.post("http://localhost:41241/", json={
+    "jsonrpc": "2.0", "id": 1, "method": "tasks/send",
+    "params": {
+        "id": str(uuid.uuid4()),
+        "skillId": "aeon-deep-research",
+        "var": "AI agent frameworks 2025",
+        "message": {"role": "user", "parts": [{"type": "text", "text": "Run aeon-deep-research"}]}
+    }
+}).json()
+
+task_id = task["result"]["id"]  # poll with tasks/get or use SSE streaming
+```
+
+**SSE streaming** for long-running skills (`deep-research`, `last30`):
+
+```bash
+curl -N -X POST http://localhost:41241/tasks/sendSubscribe \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tasks/send","params":{"skillId":"aeon-hn-digest"}}'
+```
+
+**Options:**
+
+| Flag | Effect |
+|------|--------|
+| `./add-a2a` | Build and start on port 41241 |
+| `./add-a2a --port 8080` | Use a custom port |
+| `./add-a2a --build-only` | Build without starting (CI use) |
+| `./add-a2a --print-config` | Print LangChain/Python client examples |
+
+**A2A endpoints:**
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/.well-known/agent.json` | GET | Agent card — lists all skills |
+| `/` | POST | JSON-RPC: `tasks/send`, `tasks/get`, `tasks/cancel` |
+| `/tasks/sendSubscribe` | POST | SSE streaming for async skill output |
+
+Run `./add-a2a --print-config` for ready-to-paste LangChain tool wrappers and Python polling examples.
+
+---
+
 ## GitHub Pages Gallery
 
 Aeon publishes articles to a browsable gallery via GitHub Pages. After merging, enable it in **Settings → Pages** → source `Deploy from a branch`, branch `main`, folder `/docs`.
