@@ -5,8 +5,8 @@
 <h1 align="center">AEON</h1>
 
 <p align="center">
-  <strong>Background intelligence that evolves with you.</strong><br>
-  Autonomous agent on GitHub Actions, powered by Claude Code. 91 skills across research, dev tooling, crypto monitoring, and productivity — all off by default, enable what you need.
+  <strong>The most autonomous agent framework.</strong><br>
+  91 skills on GitHub Actions — research, dev, crypto, writing — running unattended on a cron. No approval loops, no babysitting, no servers. Configure once, forget forever.
 </p>
 
 <p align="center">
