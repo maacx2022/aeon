@@ -97,26 +97,39 @@ Full descriptions: [`skills.json`](skills.json) — or run `./add-skill aaronjma
 
 ---
 
-## Integrations (MCP & A2A)
+## Soul (optional)
 
-Aeon skills work outside GitHub Actions too — use them from Claude or any AI agent framework.
+By default Aeon has no personality. To make it write and respond like you, add a soul:
 
-**Claude (MCP)** — every skill appears as an `aeon-<name>` tool in Claude Desktop and Claude Code:
+1. Fork [soul.md](https://github.com/aaronjmars/soul.md) and fill in your files:
+   - `SOUL.md` — identity, worldview, opinions, interests
+   - `STYLE.md` — voice, sentence patterns, vocabulary, tone
+   - `examples/good-outputs.md` — 10–20 calibration samples
+2. Copy into your Aeon repo under `soul/`
+3. Add to the top of `CLAUDE.md`:
 
-```bash
-./add-mcp                    # build and register
-./add-mcp --desktop          # also print Claude Desktop config
-./add-mcp --uninstall        # remove
+```markdown
+## Identity
+
+Read and internalize before every task:
+- `soul/SOUL.md` — identity and worldview
+- `soul/STYLE.md` — voice and communication patterns
+- `soul/examples.md` — calibration examples
+
+Embody this identity in all output. Never hedge with "as an AI."
 ```
 
-**Any AI agent (A2A)** — [Google's A2A protocol](https://google.github.io/A2A/) lets LangChain, AutoGen, CrewAI, OpenAI Agents SDK, and Vertex AI invoke skills via HTTP:
+Every skill reads `CLAUDE.md`, so identity propagates automatically.
 
-```bash
-./add-a2a                    # starts on port 41241
-./add-a2a --print-config     # LangChain/Python client examples
-```
+**Quality check:** soul files work when they're specific enough to be wrong. *"I think most AI safety discourse is galaxy-brained cope"* is useful. *"I have nuanced views on AI safety"* is not.
 
-Skills run locally via `claude -p -`, identical to Actions. API keys read from your environment or a `.env` file in the repo root.
+---
+
+### Instance Fleet
+
+Aeon can spawn and manage copies of itself via `spawn-instance`, `fleet-control`, and `fork-fleet`. Use this to run specialized instances — one for crypto monitoring, another for research, etc.
+
+Spawn with `var: "crypto-tracker: monitor DeFi protocols and token movements"`. The skill forks the repo, selects relevant skills, and registers it in `memory/instances.json`. No secrets are propagated — the new owner adds their own keys.
 
 ---
 
@@ -239,14 +252,6 @@ Define chains in `aeon.yml` alongside your skills. The scheduler dispatches them
 
 ---
 
-### Instance Fleet
-
-Aeon can spawn and manage copies of itself via `spawn-instance`, `fleet-control`, and `fork-fleet`. Use this to run specialized instances — one for crypto monitoring, another for research, etc.
-
-Spawn with `var: "crypto-tracker: monitor DeFi protocols and token movements"`. The skill forks the repo, selects relevant skills, and registers it in `memory/instances.json`. No secrets are propagated — the new owner adds their own keys.
-
----
-
 ### Changing check frequency
 
 Edit `.github/workflows/messages.yml`:
@@ -352,36 +357,6 @@ Label any GitHub issue `ai-build` → workflow fires → Claude reads the issue,
 
 ---
 
----
-
-## Soul (optional)
-
-By default Aeon has no personality. To make it write and respond like you, add a soul:
-
-1. Fork [soul.md](https://github.com/aaronjmars/soul.md) and fill in your files:
-   - `SOUL.md` — identity, worldview, opinions, interests
-   - `STYLE.md` — voice, sentence patterns, vocabulary, tone
-   - `examples/good-outputs.md` — 10–20 calibration samples
-2. Copy into your Aeon repo under `soul/`
-3. Add to the top of `CLAUDE.md`:
-
-```markdown
-## Identity
-
-Read and internalize before every task:
-- `soul/SOUL.md` — identity and worldview
-- `soul/STYLE.md` — voice and communication patterns
-- `soul/examples.md` — calibration examples
-
-Embody this identity in all output. Never hedge with "as an AI."
-```
-
-Every skill reads `CLAUDE.md`, so identity propagates automatically.
-
-**Quality check:** soul files work when they're specific enough to be wrong. *"I think most AI safety discourse is galaxy-brained cope"* is useful. *"I have nuanced views on AI safety"* is not.
-
----
-
 ## Project structure
 
 ![The Stack](./assets/stack.jpg)
@@ -445,6 +420,27 @@ git merge upstream/main --no-edit
 Your `memory/`, `articles/`, and personal config won't conflict — they're in files that don't exist in the template.
 
 ---
+
+## Integrations (MCP & A2A)
+
+Aeon skills work outside GitHub Actions too — use them from Claude or any AI agent framework.
+
+**Claude (MCP)** — every skill appears as an `aeon-<name>` tool in Claude Desktop and Claude Code:
+
+```bash
+./add-mcp                    # build and register
+./add-mcp --desktop          # also print Claude Desktop config
+./add-mcp --uninstall        # remove
+```
+
+**Any AI agent (A2A)** — [Google's A2A protocol](https://google.github.io/A2A/) lets LangChain, AutoGen, CrewAI, OpenAI Agents SDK, and Vertex AI invoke skills via HTTP:
+
+```bash
+./add-a2a                    # starts on port 41241
+./add-a2a --print-config     # LangChain/Python client examples
+```
+
+Skills run locally via `claude -p -`, identical to Actions. API keys read from your environment or a `.env` file in the repo root.
 
 ---
 
